@@ -5,7 +5,7 @@ name: Build .NET artifacts
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "ci" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -24,8 +24,14 @@ env:
   REPO: bdunderscore/modular-avatar-resonite
 
 jobs:
+  prep-cache:
+    uses: ./.github/workflows/update-resonite-cache.yml
+    secrets: inherit
+      
+      
   build:
     runs-on: windows-latest
+    needs: prep-cache
 
     steps:
     - uses: actions/checkout@v4
@@ -51,46 +57,13 @@ jobs:
 
     - run: dir "${{ env.RPC_SERVER_SRC }}/packages"
 
-    - name: Cache resonite
-      id: cache-resonite
+    - name: Restore resonite cache
       uses: actions/cache/restore@v4
+      id: cache-resonite
       with:
         path: "${{ env.RESONITE_PATH }}"
-        key: resonite-${{ env.CACHE_SALT }}
-
-    - name: Cache steamcmd
-      id: cache-steamcmd
-      if: steps.cache-resonite.outputs.cache-hit != 'true'
-      uses: actions/cache/restore@v4
-      with:
-        path: c:\steamcmd
-        key: steamcmd
-
-    - name: Setup steamcmd
-      if: steps.cache-steamcmd.outputs.cache-hit != 'true' && steps.cache-resonite.outputs.cache-hit != 'true'
-      run: |
-        cd c:\
-        Invoke-WebRequest https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip -OutFile c:\steamcmd.zip
-        Expand-Archive c:\steamcmd.zip -Force
-        New-Item -ItemType Directory -Path "${{ env.RESONITE_PATH }}"
-        dir c:\steamcmd
-
-    - name: Update steamcmd
-      if: steps.cache-resonite.outputs.cache-hit != 'true'
-      run: |
-        $ErrorAction = "Ignore"
-        # run updater first
-        c:\steamcmd\steamcmd +quit
-        # steamcmd exits with a nonzero error code even when successful, suppress the error
-        Exit 0
-
-
-    - name: Install resonite
-      id: install-resonite
-      if: steps.cache-resonite.outputs.cache-hit != 'true'
-      run: |
-        c:\steamcmd\steamcmd +force_install_dir "${{ env.RESONITE_PATH }}" +login ${{ secrets.STEAMUSER }} ${{ secrets.STEAMPASS }} +app_update 2519830 +quit
-
+        key: ${{ needs.prep-cache.outputs.resonite_cache_key }}
+        
     - run: dir "${{ env.RESONITE_PATH }}"
 
     - name: Build
@@ -122,21 +95,7 @@ jobs:
           ! .github
           ! DevTools~
           ! Resonite~
-        
 
-    - name: Save steamcmd cache
-      if: steps.install-resonite.outcome == 'success'
-      uses: actions/cache/save@v4
-      with:
-        key: ${{ steps.cache-steamcmd.outputs.cache-primary-key }}
-        path: c:\steamcmd
-
-    - name: Save resonite cache
-      if: steps.install-resonite.outcome == 'success'
-      uses: actions/cache/save@v4
-      with:
-        key: ${{ steps.cache-resonite.outputs.cache-primary-key }}
-        path: "${{ env.RESONITE_PATH }}"
   license:
     uses: ./.github/workflows/license-file.yml
   package:

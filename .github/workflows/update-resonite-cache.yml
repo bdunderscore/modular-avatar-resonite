@@ -2,6 +2,10 @@ name: Update resonite cache
 
 on:
   workflow_call:
+    outputs:
+      resonite_cache_key:
+        description: 'resonite cache key'
+        value: '${{ jobs.generate-or-check-cache.outputs.resonite_cache_key }}'
   workflow_dispatch:
   schedule:
     - cron: '37 4 * * *' # every day at 4:37 UTC
@@ -14,27 +18,42 @@ env:
   
 
 jobs:
-  build:
-
+  generate-or-check-cache:
+    outputs:
+      resonite_cache_key: ${{ steps.date.outputs.cache_key }}
+      
     runs-on: windows-latest
 
     steps:
-      - name: Cache resonite
-        id: cache-resonite
+      # Write a datestamp for the current week to an output variable
+      - name: Set date
+        id: date
+        run: |
+          $date = Get-Date
+          $yesterday = $date.AddDays(-1)
+          
+          $today_formatted = $date.ToString("yyyy-MM-dd")
+          $yesterday_formatted = $yesterday.ToString("yyyy-MM-dd")
+
+          echo "cache_key=resonite-$($today_formatted)${{ env.CACHE_SALT }}" >> $env:GITHUB_OUTPUT
+          echo "prior_cache_key=resonite-$($yesterday_formatted)${{ env.CACHE_SALT }}" >> $env:GITHUB_OUTPUT
+
+      - name: Check resonite cache
+        id: check-resonite-cache
         uses: actions/cache@v4
         with:
           path: "${{ env.RESONITE_PATH }}"
-          key: resonite-${{ env.CACHE_SALT }}
-
-      - name: Cache steamcmd
-        id: cache-steamcmd
-        uses: actions/cache@v4
+          key: ${{ steps.date.outputs.cache_key }}
+          lookup-only: 'true'
+          
+      - name: Try to restore prior day cache
+        uses: actions/cache/restore@v4
         with:
-          path: c:\steamcmd
-          key: steamcmd
+          path: "${{ env.RESONITE_PATH }}"
+          key: ${{ steps.date.outputs.prior_cache_key }}
 
       - name: Setup steamcmd
-        if: steps.cache-steamcmd.outputs.cache-hit != 'true'
+        if: steps.check-resonite-cache.outputs.cache-hit != 'true'
         run: |
           cd c:\
           Invoke-WebRequest https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip -OutFile c:\steamcmd.zip
@@ -43,6 +62,7 @@ jobs:
           dir c:\steamcmd
 
       - name: Update steamcmd
+        if: steps.check-resonite-cache.outputs.cache-hit != 'true'
         run: |
           $ErrorAction = "Ignore"
           # run updater first
@@ -52,6 +72,14 @@ jobs:
 
 
       - name: Install or update resonite
+        if: steps.check-resonite-cache.outputs.cache-hit != 'true'
         id: install-resonite
         run: |
           c:\steamcmd\steamcmd +force_install_dir "${{ env.RESONITE_PATH }}" +login ${{ secrets.STEAMUSER }} ${{ secrets.STEAMPASS }} +app_update 2519830 +quit
+
+      - name: Save cache
+        uses: actions/cache/save@v4
+        if: steps.check-resonite-cache.outputs.cache-hit != 'true'
+        with:
+          path: "${{ env.RESONITE_PATH }}"
+          key: ${{ steps.date.outputs.cache_key }}
