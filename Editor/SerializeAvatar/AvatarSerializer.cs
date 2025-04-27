@@ -31,7 +31,7 @@ namespace nadena.dev.ndmf.platform.resonite
         private Dictionary<UnityEngine.Object, p.ObjectID> _unityToObject = new();
         private Dictionary<Mesh, SkinnedMeshRenderer> _referenceRenderer = new();
 
-        private Queue<UnityEngine.Object> _unprocessedAssets = new();
+        private Queue<(UnityEngine.Object, UnityEngine.Object)> _unprocessedAssets = new();
 
         private p.ExportRoot _exportRoot = new();
 
@@ -47,13 +47,15 @@ namespace nadena.dev.ndmf.platform.resonite
             return new p.ObjectID() { Id = nextObjectID++ };
         }
 
-        private p.AssetID MapAsset(UnityEngine.Object? asset)
+        private p.AssetID MapAsset(UnityEngine.Object? asset, UnityEngine.Object? referenceAsset = null)
         {
             if (asset == null) return new p.AssetID() { Id = 0 };
             if (_unityToAsset.TryGetValue(asset, out var id)) return id;
 
+            referenceAsset = referenceAsset ?? asset;
+
             _unityToAsset[asset] = id = MintAssetID();
-            _unprocessedAssets.Enqueue(asset);
+            _unprocessedAssets.Enqueue((asset, referenceAsset));
 
             return id;
         }
@@ -356,13 +358,13 @@ namespace nadena.dev.ndmf.platform.resonite
         {
             while (_unprocessedAssets.Count > 0)
             {
-                var asset = _unprocessedAssets.Dequeue()!;
+                var (asset, refAsset) = _unprocessedAssets.Dequeue()!;
                 var assetID = _unityToAsset[asset];
 
                 IMessage protoAsset;
                 switch (asset)
                 {
-                    case Texture2D tex2d: protoAsset = TranslateTexture2D(tex2d); break;
+                    case Texture2D tex2d: protoAsset = TranslateTexture2D(tex2d, refAsset); break;
                     case Material mat: protoAsset = TranslateMaterial(mat); break;
                     case Mesh mesh: protoAsset = TranslateMesh(mesh); break;
                     default: continue;
@@ -379,9 +381,26 @@ namespace nadena.dev.ndmf.platform.resonite
             }
         }
 
-        private IMessage TranslateTexture2D(Texture2D tex2d)
+        private IMessage TranslateTexture2D(Texture2D tex2d, UnityEngine.Object refAsset)
         {
+            var refTex = refAsset as Texture2D ?? tex2d;
             var protoTex = new p.Texture();
+            
+            // Get texture importer for this texture, if available
+            var textureImporter = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(refTex)) as TextureImporter;
+            if (textureImporter != null)
+            {
+                if (textureImporter.maxTextureSize > 0)
+                {
+                    protoTex.MaxResolution = (uint) textureImporter.maxTextureSize;
+                }
+
+                protoTex.IsNormalMap = textureImporter.convertToNormalmap;
+            }
+            else
+            {
+                protoTex.IsNormalMap = !refTex.isDataSRGB;
+            }
 
             if (AssetDatabase.IsMainAsset(tex2d))
             {
@@ -441,50 +460,15 @@ namespace nadena.dev.ndmf.platform.resonite
             };
 
             var mainTex = material.mainTexture;
+            var mainTexRef = mainTex;
             var alphaMask = material.GetTexture("_AlphaMask");
             if (alphaMask != null)
             {
-                // Bake alpha to a temporary texture
-                var width = mainTex?.width ?? alphaMask.width;
-                var height = mainTex?.height ?? alphaMask.height;
-                
-                var tempTex = new Texture2D(width, height, TextureFormat.ARGB32, false);
-                _tempObjects.Add(tempTex);
-                var tempRT = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32);
-                var shader = mainTex != null
-                    ? Shader.Find("Hidden/NDMF/WriteColorTex")
-                    : Shader.Find("Hidden/NDMF/FillColor");
-                var tmpMat = new Material(shader);
-                _tempObjects.Add(tmpMat);
-                if (mainTex != null)
-                {
-                    tmpMat.SetTexture("_MainTex", mainTex);
-                    tmpMat.SetTextureScale("_MainTex", material.mainTextureScale);
-                    tmpMat.SetTextureOffset("_MainTex", material.mainTextureOffset);
-                }
-                Graphics.Blit(mainTex, tempRT, tmpMat);
-
-                tmpMat.shader = Shader.Find("Hidden/NDMF/WriteAlpha");
-                tmpMat.SetTexture("_AlphaMask", alphaMask);
-                tmpMat.SetTextureScale("_AlphaMask", material.GetTextureScale("_AlphaMask"));
-                tmpMat.SetTextureOffset("_AlphaMask", material.GetTextureOffset("_AlphaMask"));
-                Graphics.Blit(alphaMask, tempRT, tmpMat);
-                
-                // Read back to a texture2d
-                var tmp = RenderTexture.active;
-                RenderTexture.active = tempRT;
-                tempTex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-                tempTex.Apply();
-                RenderTexture.active = tmp;
-                
-                RenderTexture.ReleaseTemporary(tempRT);
-
-                tempTex.name = (mainTex?.name ?? alphaMask.name) + " AlphaBlend";
-                mainTex = tempTex;
+                mainTex = BakeMainTexAlpha(material, mainTex, alphaMask);
             }
             // TODO - handle differing scale/offset for alpha mask and main texture
             
-            protoMat.MainTexture = MapAsset(mainTex);
+            protoMat.MainTexture = MapAsset(mainTex, mainTexRef);
 
             protoMat.MainColor = material.color.ToRPC();
             
@@ -495,7 +479,13 @@ namespace nadena.dev.ndmf.platform.resonite
                 Offset = material.GetTextureOffset("_BumpMap").ToRPC()
             };
             
-            protoMat.EmissionMap = MapAsset(material.GetTexture("_EmissionMap"));
+            var emissionMap = material.GetTexture("_EmissionMap") as Texture2D;
+            var emissionMask = material.GetTexture("_EmissionBlendMask") as Texture2D;
+
+            if (emissionMap != null)
+            {
+                protoMat.EmissionMap = BakeEmissionMask(material, emissionMap, emissionMask);
+            }
             protoMat.EmissionColor = material.GetColor("_EmissionColor").ToRPC();
             protoMat.EmissionMapScaleOffset = new()
             {
@@ -521,6 +511,90 @@ namespace nadena.dev.ndmf.platform.resonite
             protoMat.CullMode = cullMode;
 
             return protoMat;
+        }
+
+        private p.AssetID BakeEmissionMask(Material material, Texture2D emissionMap, Texture2D? emissionMask)
+        {
+            if (emissionMask == null)
+            {
+                return MapAsset(emissionMap);
+            }
+            
+            var width = emissionMap.width;
+            var height = emissionMap.height;
+            
+            var tempTex = new Texture2D(width, height, TextureFormat.ARGB32, false);
+            _tempObjects.Add(tempTex);
+            
+            var tempRT = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32);
+            var shader = Shader.Find("Hidden/NDMF/BakeEmission");
+            
+            var tmpMat = new Material(shader);
+            _tempObjects.Add(tmpMat);
+            
+            tmpMat.SetTexture("_EmissionMap", emissionMap);
+            tmpMat.SetTextureScale("_EmissionMap", material.GetTextureScale("_EmissionMap"));
+            tmpMat.SetTextureOffset("_EmissionMap", material.GetTextureOffset("_EmissionMap"));
+            
+            tmpMat.SetTexture("_EmissionBlendMask", emissionMask);
+            tmpMat.SetTextureScale("_EmissionBlendMask", material.GetTextureScale("_EmissionBlendMask"));
+            tmpMat.SetTextureOffset("_EmissionBlendMask", material.GetTextureOffset("_EmissionBlendMask"));
+            
+            Graphics.Blit(tempTex, tempRT, tmpMat);
+            
+            // Read back to a texture2d
+            var tmp = RenderTexture.active;
+            RenderTexture.active = tempRT;
+            tempTex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+            tempTex.Apply();
+            RenderTexture.active = tmp;
+                
+            RenderTexture.ReleaseTemporary(tempRT);
+
+            tempTex.name = emissionMap.name + " MaskBaked";
+            return MapAsset(tempTex, emissionMap);
+        }
+
+        private Texture BakeMainTexAlpha(Material material, Texture mainTex, Texture alphaMask)
+        {
+            // Bake alpha to a temporary texture
+            var width = mainTex?.width ?? alphaMask.width;
+            var height = mainTex?.height ?? alphaMask.height;
+                
+            var tempTex = new Texture2D(width, height, TextureFormat.ARGB32, false);
+            _tempObjects.Add(tempTex);
+            var tempRT = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32);
+            var shader = mainTex != null
+                ? Shader.Find("Hidden/NDMF/WriteColorTex")
+                : Shader.Find("Hidden/NDMF/FillColor");
+            var tmpMat = new Material(shader);
+            _tempObjects.Add(tmpMat);
+            if (mainTex != null)
+            {
+                tmpMat.SetTexture("_MainTex", mainTex);
+                tmpMat.SetTextureScale("_MainTex", material.mainTextureScale);
+                tmpMat.SetTextureOffset("_MainTex", material.mainTextureOffset);
+            }
+            Graphics.Blit(mainTex, tempRT, tmpMat);
+
+            tmpMat.shader = Shader.Find("Hidden/NDMF/WriteAlpha");
+            tmpMat.SetTexture("_AlphaMask", alphaMask);
+            tmpMat.SetTextureScale("_AlphaMask", material.GetTextureScale("_AlphaMask"));
+            tmpMat.SetTextureOffset("_AlphaMask", material.GetTextureOffset("_AlphaMask"));
+            Graphics.Blit(alphaMask, tempRT, tmpMat);
+                
+            // Read back to a texture2d
+            var tmp = RenderTexture.active;
+            RenderTexture.active = tempRT;
+            tempTex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+            tempTex.Apply();
+            RenderTexture.active = tmp;
+                
+            RenderTexture.ReleaseTemporary(tempRT);
+
+            tempTex.name = (mainTex?.name ?? alphaMask.name) + " AlphaBlend";
+            mainTex = tempTex;
+            return mainTex;
         }
 
 

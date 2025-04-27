@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using System.Reflection;
+using Elements.Assets;
 using Assimp = Assimp;
 using Elements.Core;
 using FrooxEngine.CommonAvatar;
@@ -216,10 +217,40 @@ public partial class RootConverter : IDisposable
 
         var textureComponent = holder.AttachComponent<f.StaticTexture2D>();
         textureComponent.URL.Value = uri;
+        textureComponent.IsNormalMap.Value = texture.IsNormalMap;
+
+        var resizeTask = ResizeTextureIfNeeded(textureComponent, texture);
+        Defer(PHASE_FINALIZE, () => resizeTask);
         
         return textureComponent;
     }
-    
+
+    private async Task ResizeTextureIfNeeded(f.StaticTexture2D textureComponent, p.Texture texture)
+    {
+        if (!texture.HasMaxResolution) return;
+        
+        while (!textureComponent.IsAssetAvailable)
+        {
+            await new f.NextUpdate();
+        }
+
+        var size = textureComponent.Asset.Size;
+        if (size.x <= texture.MaxResolution && size.y <= texture.MaxResolution) return;
+
+        Console.WriteLine("Resizing texture " + textureComponent.Slot.Name + " to " + texture.MaxResolution);
+
+        try
+        {
+            await textureComponent.Rescale((int)texture.MaxResolution, Filtering.Lanczos3);
+        }
+        catch (Exception)
+        {
+            // Suppress noisy stack traces if we failed and destroyed the avatar root before the resize finished
+            if (textureComponent.IsDestroyed) return;
+            throw;
+        }
+    }
+
     private async Task<f.IWorldElement?> CreateMesh(string name, p::mesh.Mesh mesh)
     {
         var holder = AssetSubslot("Meshes", _assetRoot).AddSlot(name);
