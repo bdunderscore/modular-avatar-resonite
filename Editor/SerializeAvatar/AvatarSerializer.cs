@@ -382,6 +382,22 @@ namespace nadena.dev.ndmf.platform.resonite
         private IMessage TranslateTexture2D(Texture2D tex2d)
         {
             var protoTex = new p.Texture();
+            
+            // Get texture importer for this texture, if available
+            var textureImporter = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(tex2d)) as TextureImporter;
+            if (textureImporter != null)
+            {
+                if (textureImporter.maxTextureSize > 0)
+                {
+                    protoTex.MaxResolution = (uint) textureImporter.maxTextureSize;
+                }
+
+                protoTex.IsNormalMap = textureImporter.convertToNormalmap;
+            }
+            else
+            {
+                protoTex.IsNormalMap = !tex2d.isDataSRGB;
+            }
 
             if (AssetDatabase.IsMainAsset(tex2d))
             {

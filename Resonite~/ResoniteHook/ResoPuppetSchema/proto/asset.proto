@@ -70,6 +70,8 @@ enum TextureFormat {
 
 message Texture {
   TextureFormat format = 1;
+  bool is_normal_map = 3;
+  optional uint32 max_resolution = 4;
   
   oneof contents {
     Blob bytes = 2;
