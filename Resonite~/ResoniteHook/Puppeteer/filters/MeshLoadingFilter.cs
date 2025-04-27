@@ -13,7 +13,6 @@ namespace nadena.dev.resonity.remote.puppeteer.filters;
 public class MeshLoadingFilter
 {
     private Slot _avatarRoot;
-    private string _loadingUri = "resrec:///U-1Nj73SRfaDY/R-c507ae1e-fb6c-4da6-bdbc-8048b06e7ff7"; 
 
     public MeshLoadingFilter(Slot avatarRoot)
     {
@@ -77,7 +76,7 @@ public class MeshLoadingFilter
         var slot = _avatarRoot.AddSlot("LoadingSpinner");
 
         Console.WriteLine("==== Spawn loading spinner ==="); 
-        bool result = await slot.LoadObjectAsync(new Uri(_loadingUri));
+        bool result = await slot.LoadObjectAsync(new Uri(CloudSpawnAssets.LoadingSpinner));
         Console.WriteLine("Result: " + result);
         
         slot.LocalRotation = floatQ.Identity;

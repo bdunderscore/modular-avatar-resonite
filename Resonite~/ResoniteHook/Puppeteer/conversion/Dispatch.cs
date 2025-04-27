@@ -17,6 +17,8 @@ public partial class RootConverter
     private const int PHASE_ENABLE_RIG = 500;
 
     private const int PHASE_POSTPROCESS = 1000;
+    private const int PHASE_AWAIT_CLOUD_SPAWN = 2000;
+    private const int PHASE_FINALIZE = 10000;
     
     private Dictionary<string, ComponentBuilder> ComponentTypes = new();
 
@@ -74,9 +76,12 @@ public partial class RootConverter
 
     private async Task RunDeferred()
     {
-        foreach (var kv in _deferredActions)
+        while (_deferredActions.Count > 0)
         {
-            foreach (var action in kv.Value)
+            var firstKV = _deferredActions.First();
+            _deferredActions.Remove(firstKV.Key);
+            
+            foreach (var action in firstKV.Value)
             {
                 await action();
                 await new f.ToWorld();

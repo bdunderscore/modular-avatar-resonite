@@ -20,6 +20,8 @@ using pm = nadena.dev.ndmf.proto.mesh;
 public partial class RootConverter
 {
     private const bool FREEZE_AVATAR = false;
+
+    private f.Slot? _settingsRoot;
     
     private async Task SetupRig(f.Slot parent, p.AvatarDescriptor avDesc)
     {
@@ -152,6 +154,8 @@ public partial class RootConverter
         await InvokeAvatarBuilder(slot, spec);
 
         if (FREEZE_AVATAR) return;
+
+        CreateSettingsNode();
         
         // Setup visemes
         var driver = slot.GetComponentInChildren<f.DirectVisemeDriver>();
@@ -163,6 +167,25 @@ public partial class RootConverter
         }
         
         RestoreBlendshapes(blendshapes);
+    }
+
+    private f.Slot CreateSettingsNode()
+    {
+        if (_settingsRoot != null) return _settingsRoot;
+        
+        _settingsRoot = _root.AddSlot("<color=#00ffff>Avatar Settings</color>");
+        var copier = _settingsRoot.AddSlot("Settings Copier");
+        var task = copier.LoadObjectAsync(new Uri(CloudSpawnAssets.SettingsCopier));
+        
+        Defer(PHASE_AWAIT_CLOUD_SPAWN, () => task);
+        Defer(PHASE_FINALIZE, () =>
+        {
+            _settingsRoot.SetParent(_root, false);
+            _settingsRoot.Tag = "NDMFAvatarSettings";
+            _root.Tag = "NDMFAvatarRoot";
+        });
+
+        return _settingsRoot;
     }
 
     private async Task SetupVisemes(p.AvatarDescriptor spec)

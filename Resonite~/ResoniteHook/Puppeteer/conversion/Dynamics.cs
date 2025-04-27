@@ -118,7 +118,10 @@ public partial class RootConverter
 
     private void GenerateTemplateControls(f.DynamicBoneChain db, string templateName)
     {
-        if (_dynamicBoneTemplateRoot == null) _dynamicBoneTemplateRoot = _root.AddSlot("DB Templates");
+        if (_dynamicBoneTemplateRoot == null)
+        {
+            _dynamicBoneTemplateRoot = CreateSettingsNode().AddSlot("DB Templates");
+        }
 
         string prefix = "NDMF/DB Template.";
         string intron = ".";
