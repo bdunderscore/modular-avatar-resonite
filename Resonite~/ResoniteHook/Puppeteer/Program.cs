@@ -35,7 +35,7 @@ internal class Program
         var pendingEP = new PendingEntryPoint();
         new RPCServer(pipeName).Start(pendingEP);
         
-        var engineController = new EngineController();
+        var engineController = new EngineController(resoDirectory);
         await engineController.Start();
         
         Console.WriteLine("==== Startup complete ====");

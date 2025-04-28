@@ -24,9 +24,9 @@ public class EngineController : IAsyncDisposable
     public Engine Engine => _engine;
     public World World => _world;
     
-    public EngineController()
+    public EngineController(string ResoniteDirectory)
     {
-        
+        this.ResoniteDirectory = ResoniteDirectory;
     }
 
     public async Task Start()
