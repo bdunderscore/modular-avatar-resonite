@@ -1,5 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# 
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Launcher", "Launcher\Launcher.csproj", "{62ADAA8C-C53E-4392-8B61-75A9A8AA8D90}"
 	ProjectSection(ProjectDependencies) = postProject
 		{50E33D4D-773E-4A70-8BD2-AC2436873C5A} = {50E33D4D-773E-4A70-8BD2-AC2436873C5A}

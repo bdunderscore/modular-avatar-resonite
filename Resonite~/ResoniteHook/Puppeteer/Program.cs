@@ -52,8 +52,4 @@ internal class Program
         }
     }
 
-    private static void InitAssimp(string resoDirectory)
-    {
-        AssimpLibrary.Instance.LoadLibrary(null, resoDirectory + "\\assimp.dll");
-    }
 }

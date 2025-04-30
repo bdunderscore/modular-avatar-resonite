@@ -10,12 +10,15 @@
         <IsDeploymentTarget>true</IsDeploymentTarget>
     </PropertyGroup>
     <ItemGroup>
-      <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+        <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" Condition="!Exists('./System.CommandLine.dll')" />
+        <Reference Include="System.CommandLine" Condition="Exists('./System.CommandLine.dll')">
+            <HintPath>./System.CommandLine.dll</HintPath>
+        </Reference>
     </ItemGroup>
     <ItemGroup>
-      <None Remove="Data\Instance.lock" />
-      <None Remove="Data\Data.litedb" />
-      <None Remove="Cache\Cache\l49zrdgq876te5z0" />
+        <None Remove="Data\Instance.lock" />
+        <None Remove="Data\Data.litedb" />
+        <None Remove="Cache\Cache\l49zrdgq876te5z0" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\PuppeteerCommon\PuppeteerCommon.csproj" />
