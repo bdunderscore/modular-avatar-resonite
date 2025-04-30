@@ -3,3 +3,10 @@ Managed/Debug.meta
 Managed/*
 DevTools~/*.exe
 ResoPuppet~/
+
+Resonite~/ResoniteDir
+
+**/obj
+**/bin
+
+.vscode

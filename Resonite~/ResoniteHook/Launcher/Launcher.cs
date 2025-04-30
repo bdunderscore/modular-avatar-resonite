@@ -6,7 +6,7 @@ namespace nadena.dev.resonity.remote.bootstrap;
 
 public class Launcher
 {
-    private const string defaultResoniteBase = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Resonite";
+    private const string defaultResoniteBase = "C:/Program Files (x86)/Steam/steamapps/common/Resonite";
     private string assemblyBase;
     private string puppeteerBase;
 
@@ -21,22 +21,23 @@ public class Launcher
     public void ConfigurePaths(string? resonitePath = null)
     {
         resoniteBase = resonitePath ?? SteamUtils.GetGamePath(2519830) ?? defaultResoniteBase;
-        
-        assemblyBase = resoniteBase + "\\Resonite_Data\\Managed\\";       
-        
+
+        assemblyBase = resoniteBase + "/Resonite_Data/Managed/";
+
         dllPaths = new()
         {
+            Directory.GetCurrentDirectory() + "/",
             Path.GetDirectoryName(typeof(Launcher).Assembly.Location)!,
             assemblyBase,
-            resoniteBase + "\\Resonite_Data\\Plugins\\x86_64\\",
-            resoniteBase + "\\Tools\\",
+            resoniteBase + "/Resonite_Data/Plugins/x86_64/",
+            resoniteBase + "/Tools/",
         };
 
         AppDomain.CurrentDomain.AssemblyLoad += (sender, args) =>
         {
-            NativeLibrary.SetDllImportResolver(args.LoadedAssembly, DllImportResolver);    
+            NativeLibrary.SetDllImportResolver(args.LoadedAssembly, DllImportResolver);
         };
-        
+
         AppDomain.CurrentDomain.AssemblyResolve += OnResolveFailed;
     }
 
@@ -48,14 +49,14 @@ public class Launcher
         {
             throw new ArgumentNullException(nameof(tempDirectory), "Temp directory cannot be null");
         }
-        
+
         if (pipeName == null)
         {
             throw new ArgumentNullException(nameof(pipeName), "Pipe name cannot be null");
         }
          
         ConfigurePaths();
-        
+
         System.Console.WriteLine("Starting Resonite Launcher");
 
         /*
@@ -64,7 +65,6 @@ public class Launcher
         var main = program.GetMethod("Main", BindingFlags.Static | BindingFlags.NonPublic);
         await (Task) main.Invoke(null, null);
         */
-
         Assembly puppeteerAssembly;
         try
         {
@@ -78,8 +78,8 @@ public class Launcher
             puppeteerAssembly = Assembly.LoadFile(path);
         }
 
-        puppeteerBase = Path.GetDirectoryName(puppeteerAssembly.Location) + "//";
-        
+        puppeteerBase = Path.GetDirectoryName(puppeteerAssembly.Location) + "/";
+
         var puppeteer = puppeteerAssembly.GetType("nadena.dev.resonity.remote.puppeteer.Program");
         var main = puppeteer?.GetMethod("Launch", BindingFlags.Static | BindingFlags.NonPublic);
 
@@ -111,7 +111,7 @@ public class Launcher
         rootCommand.AddOption(tempDirectory);
         rootCommand.AddOption(pipeName);
         rootCommand.AddOption(autoShutdownTimeout);
-        
+
         rootCommand.SetHandler((string? resoInstallPath, string? tempDirectory, string? pipeName, int? autoShutdownTimeout) =>
         {
             if (resoInstallPath != null)
@@ -133,7 +133,7 @@ public class Launcher
             {
                 this.autoShutdownTimeout = autoShutdownTimeout;
             }
-            
+
             Console.WriteLine("resoInstallPath: " + this.resoniteBase);
             Console.WriteLine("tempDirectory: " + this.tempDirectory);
             Console.WriteLine("pipeName: " + this.pipeName);
@@ -145,22 +145,33 @@ public class Launcher
 
     private IntPtr DllImportResolver(string libraryname, Assembly assembly, DllImportSearchPath? searchpath)
     {
-        if (!libraryname.EndsWith(".dll"))
+        var so = libraryname;
+        var dll = libraryname;
+        if (!dll.EndsWith(".dll"))
         {
-            libraryname += ".dll";
-        };
+            dll += ".dll";
+        }
+        if (!so.EndsWith(".so"))
+        {
+            so += ".so";
+
+        }
         foreach (var dllPath in dllPaths)
         {
             try
             {
-                return NativeLibrary.Load(dllPath + libraryname, assembly, searchpath);
+                var h = NativeLibrary.Load(dllPath + dll, assembly, searchpath);
+                if (h != 0) { return h; }
             }
-            catch (DllNotFoundException)
+            catch (DllNotFoundException) {  }
+            try
             {
-                continue;
+                var h = NativeLibrary.Load(dllPath + so, assembly, null);
+                if (h != 0) { return h; }
             }
+            catch (DllNotFoundException) { }
         }
-        
+
         return IntPtr.Zero;
     }
 
@@ -179,7 +190,7 @@ public class Launcher
         }
 
         if (name == "Puppeteer") return null;
-        
+
         var dll = assemblyBase + name + ".dll";
 
         try

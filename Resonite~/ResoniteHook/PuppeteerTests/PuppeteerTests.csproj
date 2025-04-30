@@ -21,20 +21,23 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Launcher\Launcher.csproj" />
-      <ProjectReference Include="..\Puppeteer\Puppeteer.csproj" />
+        <ProjectReference Include="..\Launcher\Launcher.csproj" />
+        <ProjectReference Include="..\Puppeteer\Puppeteer.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <Reference Include="Elements.Assets">
-        <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\Elements.Assets.dll</HintPath>
-      </Reference>
-      <Reference Include="Elements.Core">
-        <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\Elements.Core.dll</HintPath>
-      </Reference>
-      <Reference Include="FrooxEngine">
-        <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\FrooxEngine.dll</HintPath>
-      </Reference>
+        <Reference Include="Elements.Assets">
+            <HintPath Condition="Exists('../../ResoniteDir')">../../ResoniteDir/Resonite_Data/Managed/Elements.Assets.dll</HintPath>
+            <HintPath Condition="Exists('C:\Program Files (x86)\Steam\steamapps\common\Resonite')">C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\Elements.Assets.dll</HintPath>
+        </Reference>
+        <Reference Include="Elements.Core">
+            <HintPath Condition="Exists('../../ResoniteDir')">../../ResoniteDir/Resonite_Data/Managed/Elements.Core.dll</HintPath>
+            <HintPath Condition="Exists('C:\Program Files (x86)\Steam\steamapps\common\Resonite')">C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\Elements.Core.dll</HintPath>
+        </Reference>
+        <Reference Include="FrooxEngine">
+            <HintPath Condition="Exists('../../ResoniteDir')">../../ResoniteDir/Resonite_Data/Managed/FrooxEngine.dll</HintPath>
+            <HintPath Condition="Exists('C:\Program Files (x86)\Steam\steamapps\common\Resonite')">C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\FrooxEngine.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
 </Project>
