@@ -335,10 +335,13 @@ namespace nadena.dev.ndmf.platform.resonite
                 protoMeshRenderer.Bones.Add(MapObject(bone?.gameObject));
             }
 
-            var blendshapes = sharedMesh.blendShapeCount;
-            for (int i = 0; i < blendshapes; i++)
+            if (sharedMesh != null)
             {
-                protoMeshRenderer.BlendshapeWeights.Add(r.GetBlendShapeWeight(i) / 100.0f);
+                var blendshapes = sharedMesh.blendShapeCount;
+                for (int i = 0; i < blendshapes; i++)
+                {
+                    protoMeshRenderer.BlendshapeWeights.Add(r.GetBlendShapeWeight(i) / 100.0f);
+                }
             }
 
             return protoMeshRenderer;
