@@ -5,6 +5,7 @@
   "unity": "2022.3",
   "description": "",
   "dependencies": {},
+  "license": "MIT",
   "vpmDependencies": {
     "nadena.dev.ndmf": ">=1.8.0-alpha.10 <2.0.0-a"
   }
