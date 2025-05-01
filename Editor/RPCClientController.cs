@@ -138,10 +138,12 @@ namespace nadena.dev.ndmf.platform.resonite
             }
 
             var activePipes = ActivePipes();
-            if (activePipes.Contains(DevPipeName))
+            var devPipeName = DevPipeName;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) is false) { devPipeName = Path.GetFullPath(Path.Combine(PipeFolder, devPipeName)); }
+            if (activePipes.Contains(devPipeName))
             {
                 _isDebugBackend = true;
-                return _client = OpenChannel(DevPipeName);
+                return _client = OpenChannel(devPipeName);
             }
 
             _isDebugBackend = false;
