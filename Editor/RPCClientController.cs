@@ -22,6 +22,7 @@ namespace nadena.dev.ndmf.platform.resonite
     {
         private const string DevPipeName = "MA_RESO_PUPPETEER_DEV";
         private const string ProdPipePrefix = "ModularAvatarResonite_PuppetPipe_";
+        private const string PipeFolder = ".ResonitePuppetPipe";
 
         private static ResoPuppeteer.ResoPuppeteerClient? _client;
         private static Task<ResoPuppeteer.ResoPuppeteerClient>? _clientTask = null;
@@ -102,9 +103,15 @@ namespace nadena.dev.ndmf.platform.resonite
 
         private static HashSet<string> ActivePipes()
         {
-            return new HashSet<string>(System.IO.Directory.GetFiles("\\\\.\\pipe\\")
-                .Select(p => p.Split("\\").Last())
-            );
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return new HashSet<string>(System.IO.Directory.GetFiles("\\\\.\\pipe\\")
+                    .Select(p => p.Split("\\").Last())
+                );
+            else
+            {
+                if (Directory.Exists(PipeFolder) is false) Directory.CreateDirectory(PipeFolder);
+                return Directory.GetFiles(PipeFolder).Select(Path.GetFullPath).ToHashSet();
+            }
         }
 
         internal static CancellationToken CancelAfter(int timeoutMs)
@@ -139,6 +146,7 @@ namespace nadena.dev.ndmf.platform.resonite
 
             _isDebugBackend = false;
             var pipeName = ProdPipePrefix + Process.GetCurrentProcess().Id;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) is false) { pipeName = Path.GetFullPath(Path.Combine(PipeFolder, pipeName)); }
 
             // if there is already a server running, try to shut it down (since we've lost the process handle)
             if (activePipes.Contains(pipeName))
@@ -164,7 +172,7 @@ namespace nadena.dev.ndmf.platform.resonite
             }
 
             var cwd = Path.GetFullPath("Packages/nadena.dev.modular-avatar.resonite/ResoPuppet~");
-            var exe = Path.Combine(cwd, "Launcher.exe");
+            var exe = Path.Combine(cwd, RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Launcher.exe" : "Launcher");
 
             if (!File.Exists(exe))
             {
@@ -202,6 +210,7 @@ namespace nadena.dev.ndmf.platform.resonite
             _lastProcess.Exited += (sender, e) =>
             {
                 Console.WriteLine("Resonite Launcher exited");
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) is false && File.Exists(pipeName)) File.Delete(pipeName);
                 _client = null;
             };
 
@@ -250,11 +259,11 @@ namespace nadena.dev.ndmf.platform.resonite
     {
         private readonly Task<ResoPuppeteer.ResoPuppeteerClient> _clientTask;
         private bool _isDisposed = false;
-        
+
         public ClientHandle(Task<ResoPuppeteer.ResoPuppeteerClient> client)
         {
             _clientTask = client;
-            
+
             var currentContext = SynchronizationContext.Current;
             SynchronizationContext.SetSynchronizationContext(null);
             Task.Run(async () =>
@@ -267,7 +276,7 @@ namespace nadena.dev.ndmf.platform.resonite
             });
             SynchronizationContext.SetSynchronizationContext(currentContext);
         }
-        
+
         public Task<ResoPuppeteer.ResoPuppeteerClient> GetClient()
         {
             return _clientTask;
