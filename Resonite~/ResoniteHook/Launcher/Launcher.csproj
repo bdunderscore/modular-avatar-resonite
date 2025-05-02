@@ -10,10 +10,7 @@
         <IsDeploymentTarget>true</IsDeploymentTarget>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" Condition="!Exists('./System.CommandLine.dll')" />
-        <Reference Include="System.CommandLine" Condition="Exists('./System.CommandLine.dll')">
-            <HintPath>./System.CommandLine.dll</HintPath>
-        </Reference>
+        <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1"/>
     </ItemGroup>
     <ItemGroup>
         <None Remove="Data\Instance.lock" />
