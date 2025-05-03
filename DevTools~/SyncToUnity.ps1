@@ -11,8 +11,7 @@ Copy-Item -Path "Resonite~/ResoniteHook/Launcher/bin/*.pdb" -Destination "./Reso
 Copy-Item -Path "Resonite~/ResoniteHook/Launcher/bin/*.json" -Destination "./ResoPuppet~" -Recurse -Force
 Copy-Item -Path "Resonite~/ResoniteHook/Puppeteer/bin/*.dll" -Destination "./ResoPuppet~" -Recurse -Force
 Copy-Item -Path "Resonite~/ResoniteHook/Puppeteer/bin/*.pdb" -Destination "./ResoPuppet~" -Recurse -Force
+Copy-Item -Path "Resonite~/ResoniteHook/Puppeteer/bin/*.so*" -Destination "./ResoPuppet~" -Recurse -Force
 
 Copy-Item -Path "Resonite~/ResoniteHook/Launcher/bin/Launcher" -Destination "./ResoPuppet~" -Force
 Copy-Item -Path "Resonite~/ResoniteHook/Puppeteer/bin/Puppeteer" -Destination "./ResoPuppet~" -Force
-
-dotnet run --project DevTools~/ResolveSharedObject
