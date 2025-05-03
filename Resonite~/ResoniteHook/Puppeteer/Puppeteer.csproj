@@ -129,4 +129,10 @@
       <ProjectReference Include="..\PuppeteerCommon\PuppeteerCommon.csproj" />
     </ItemGroup>
 
+    <PropertyGroup>
+        <OutDir>bin</OutDir>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    </PropertyGroup>
+
 </Project>
