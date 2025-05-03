@@ -98,7 +98,7 @@
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
         </PackageReference>
-        <PackageReference Include="Grpc.AspNetCore.Server" Version="2.70.0"/>
+        <PackageReference Include="Grpc.AspNetCore.Server" Version="2.70.0" />
         <PackageReference Include="Grpc.Tools" Version="2.71.0">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
@@ -128,6 +128,22 @@
     <ItemGroup>
       <ProjectReference Include="..\PuppeteerCommon\PuppeteerCommon.csproj" />
     </ItemGroup>
+
+    <PropertyGroup>
+        <UNAssimpVersion>5.4.1</UNAssimpVersion>
+        <FreeImageVersion>4.3.6</FreeImageVersion>
+        <OpenRAVersion>1.0.11</OpenRAVersion>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageDownload Include="Ultz.Native.Assimp" Version="[$(UNAssimpVersion)]"/>
+        <PackageDownload Include="FreeImage-dotnet-core" Version="[$(FreeImageVersion)]" />
+        <PackageDownload Include="OpenRA-Freetype6" Version="[$(OpenRAVersion)]" />
+    </ItemGroup>
+    <Target Name="CopyNativeLibraries" AfterTargets="Build">
+        <Copy SourceFiles="$(NuGetPackageRoot)/ultz.native.assimp/$(UNAssimpVersion)/runtimes/linux-x64/native/libassimp.so.5" DestinationFolder="$(OutDir)" />
+        <Copy SourceFiles="$(NuGetPackageRoot)/freeimage-dotnet-core/$(FreeImageVersion)/runtimes/ubuntu.16.04-x64/native/FreeImage.so" DestinationFolder="$(OutDir)" />
+        <Copy SourceFiles="$(NuGetPackageRoot)/openra-freetype6/$(OpenRAVersion)/native/linux-x64/freetype6.so" DestinationFolder="$(OutDir)" />
+    </Target>
 
     <PropertyGroup>
         <OutDir>bin</OutDir>
