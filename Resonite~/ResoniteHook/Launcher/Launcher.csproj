@@ -18,4 +18,10 @@
         <None Remove="Cache\Cache\l49zrdgq876te5z0" />
     </ItemGroup>
 
+  <PropertyGroup>
+    <OutDir>bin</OutDir>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+  </PropertyGroup>
+
 </Project>

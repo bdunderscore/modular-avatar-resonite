@@ -122,4 +122,10 @@
         <Folder Include="obj/Debug/" />
     </ItemGroup>
 
+    <PropertyGroup>
+        <OutDir>bin</OutDir>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    </PropertyGroup>
+
 </Project>
