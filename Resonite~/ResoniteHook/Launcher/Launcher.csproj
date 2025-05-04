@@ -17,9 +17,5 @@
       <None Remove="Data\Data.litedb" />
       <None Remove="Cache\Cache\l49zrdgq876te5z0" />
     </ItemGroup>
-    <ItemGroup>
-      <Folder Include="Cache\Cache\" />
-      <Folder Include="Data\" />
-    </ItemGroup>
 
 </Project>

@@ -49,7 +49,8 @@ public partial class RootConverter
         {
             mat.MainTexture.Value = AssetRefID<f.IAssetProvider<f.Texture2D>>(src.MainTexture);
             mat.NormalMap.Value = AssetRefID<f.IAssetProvider<f.Texture2D>>(src.NormalMap);
-            mat.EmissionMap.Value = AssetRefID<f.IAssetProvider<f.Texture2D>>(src.EmissionMap);            
+            mat.EmissionMap.Value = AssetRefID<f.IAssetProvider<f.Texture2D>>(src.EmissionMap);     
+            mat.Matcap.Value = AssetRefID<f.IAssetProvider<f.Texture2D>>(src.MatcapTexture);
         });
         
         if (src.MainTextureScaleOffset != null)

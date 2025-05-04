@@ -28,6 +28,7 @@ namespace nadena.dev.ndmf.platform.resonite
         private ulong nextObjectID = 1;
 
         private Dictionary<UnityEngine.Object, p.AssetID> _unityToAsset = new();
+        private Dictionary<UnityEngine.Object, IMessage?> _protoAssets = new();
         private Dictionary<UnityEngine.Object, p.ObjectID> _unityToObject = new();
         private Dictionary<Mesh, SkinnedMeshRenderer> _referenceRenderer = new();
 
@@ -37,6 +38,24 @@ namespace nadena.dev.ndmf.platform.resonite
 
         private List<UnityEngine.Object> _tempObjects = new();
 
+        private List<IShaderTranslator> _shaderTranslators;
+
+        internal AvatarSerializer()
+        {
+            _shaderTranslators = new()
+            {
+                new LiltoonShaderSupport(ImportTexture),
+                new GenericShaderTranslator(ImportTexture),
+            };
+        }
+
+        private bool ImportTexture(Texture? tex, Texture? importReference, out p.AssetID? assetID, out p.Texture? translatedTex)
+        {
+            assetID = MapAsset(tex, importReference, out var protoAsset);
+            translatedTex = protoAsset as p.Texture;
+            return assetID.Id != 0;
+        }
+        
         private p.AssetID MintAssetID()
         {
             return new p.AssetID() { Id = nextAssetID++ };
@@ -49,13 +68,43 @@ namespace nadena.dev.ndmf.platform.resonite
 
         private p.AssetID MapAsset(UnityEngine.Object? asset, UnityEngine.Object? referenceAsset = null)
         {
+            return MapAsset(asset, referenceAsset, out _);
+        }
+
+        private p.AssetID MapAsset(UnityEngine.Object? asset, UnityEngine.Object? referenceAsset, out IMessage? protoAsset)
+        {
+            protoAsset = null;
             if (asset == null) return new p.AssetID() { Id = 0 };
-            if (_unityToAsset.TryGetValue(asset, out var id)) return id;
+            if (_unityToAsset.TryGetValue(asset, out var id))
+            {
+                protoAsset = _protoAssets.GetValueOrDefault(asset);
+                return id;
+            }
 
             referenceAsset = referenceAsset ?? asset;
 
             _unityToAsset[asset] = id = MintAssetID();
-            _unprocessedAssets.Enqueue((asset, referenceAsset));
+
+            switch (asset)
+            {
+                case Texture2D tex2d: protoAsset = TranslateTexture2D(tex2d, referenceAsset); break;
+                case Material mat: protoAsset = TranslateMaterial(mat); break;
+                case Mesh mesh: protoAsset = TranslateMesh(mesh); break;
+                default: protoAsset = null; break;
+            }
+
+            if (protoAsset != null)
+            {
+                _protoAssets[asset] = protoAsset;
+                p.Asset wrapper = new()
+                {
+                    Name = asset.name,
+                    Id = id,
+                    Asset_ = Any.Pack(protoAsset)
+                };
+
+                _exportRoot.Assets.Add(wrapper);
+            }
 
             return id;
         }
@@ -94,8 +143,6 @@ namespace nadena.dev.ndmf.platform.resonite
                     });
                 }
 
-                ProcessAssets();
-
                 return _exportRoot;
             }
             finally
@@ -103,6 +150,11 @@ namespace nadena.dev.ndmf.platform.resonite
                 foreach (var obj in _tempObjects)
                 {
                     UnityEngine.Object.DestroyImmediate(obj);
+                }
+
+                foreach (var translator in _shaderTranslators)
+                {
+                    translator.Dispose();
                 }
             }
         }
@@ -355,35 +407,7 @@ namespace nadena.dev.ndmf.platform.resonite
                 proto.Materials.Add(MapAsset(mat));
             }
         }
-
-
-        private void ProcessAssets()
-        {
-            while (_unprocessedAssets.Count > 0)
-            {
-                var (asset, refAsset) = _unprocessedAssets.Dequeue()!;
-                var assetID = _unityToAsset[asset];
-
-                IMessage protoAsset;
-                switch (asset)
-                {
-                    case Texture2D tex2d: protoAsset = TranslateTexture2D(tex2d, refAsset); break;
-                    case Material mat: protoAsset = TranslateMaterial(mat); break;
-                    case Mesh mesh: protoAsset = TranslateMesh(mesh); break;
-                    default: continue;
-                }
-
-                p.Asset wrapper = new()
-                {
-                    Name = asset.name,
-                    Id = assetID,
-                    Asset_ = Any.Pack(protoAsset)
-                };
-
-                _exportRoot.Assets.Add(wrapper);
-            }
-        }
-
+        
         private IMessage TranslateTexture2D(Texture2D tex2d, UnityEngine.Object refAsset)
         {
             var refTex = refAsset as Texture2D ?? tex2d;
@@ -421,10 +445,20 @@ namespace nadena.dev.ndmf.platform.resonite
             }
         
             // Convert to PNG (blit if necessary)
-            if (!tex2d.isReadable || tex2d.format != TextureFormat.ARGB32)
+            byte[]? png = null;
+            try
             {
+                png = tex2d.EncodeToPNG();
+            }
+            catch (ArgumentException)
+            {
+                // continue with blit path below.
+            }
+            if (png == null)
+            {
+                // Transform texture into an encodable format. We can't use CopyTexture as formats will be different
+                // here.
                 var tmpTex = new Texture2D(tex2d.width, tex2d.height, TextureFormat.ARGB32, false);
-                // We can't use copytexture as the formats may differ; bounce through a RenderTexture
                 var tmpRT = RenderTexture.GetTemporary(tex2d.width, tex2d.height, 0, RenderTextureFormat.ARGB32);
                 var priorRT = RenderTexture.active;
                 try
@@ -438,82 +472,25 @@ namespace nadena.dev.ndmf.platform.resonite
                 {
                     RenderTexture.active = priorRT;
                 }
-                
-                protoTex.Bytes = new() { Inline = ByteString.CopyFrom(tmpTex.EncodeToPNG()) };
+
+                png = tmpTex.EncodeToPNG();
                 UnityEngine.Object.DestroyImmediate(tmpTex);
             }
-            else
-            {
-                protoTex.Bytes = new() { Inline = ByteString.CopyFrom(tex2d.EncodeToPNG()) };
-            }
+            protoTex.Bytes = new() { Inline = ByteString.CopyFrom(png) };
             protoTex.Format = p.TextureFormat.Png;
 
             return protoTex;
         
         }
 
-        private IMessage TranslateMaterial(Material material)
+        private IMessage? TranslateMaterial(Material material)
         {
-            var protoMat = new p.Material();
-
-            protoMat.MainTextureScaleOffset = new()
+            foreach (var handler in _shaderTranslators)
             {
-                Scale = material.mainTextureScale.ToRPC(),
-                Offset = material.mainTextureOffset.ToRPC()
-            };
-
-            var mainTex = material.mainTexture;
-            var mainTexRef = mainTex;
-            var alphaMask = material.GetTexture("_AlphaMask");
-            if (alphaMask != null)
-            {
-                mainTex = BakeMainTexAlpha(material, mainTex, alphaMask);
+                if (handler.TryTranslateMaterial(material, out var protoMat)) return protoMat;
             }
-            // TODO - handle differing scale/offset for alpha mask and main texture
-            
-            protoMat.MainTexture = MapAsset(mainTex, mainTexRef);
 
-            protoMat.MainColor = material.color.ToRPC();
-            
-            protoMat.NormalMap = MapAsset(material.GetTexture("_BumpMap"));
-            protoMat.NormalMapScaleOffset = new()
-            {
-                Scale = material.GetTextureScale("_BumpMap").ToRPC(),
-                Offset = material.GetTextureOffset("_BumpMap").ToRPC()
-            };
-            
-            var emissionMap = material.GetTexture("_EmissionMap") as Texture2D;
-            var emissionMask = material.GetTexture("_EmissionBlendMask") as Texture2D;
-
-            if (emissionMap != null)
-            {
-                protoMat.EmissionMap = BakeEmissionMask(material, emissionMap, emissionMask);
-            }
-            protoMat.EmissionColor = material.GetColor("_EmissionColor").ToRPC();
-            protoMat.EmissionMapScaleOffset = new()
-            {
-                Scale = material.GetTextureScale("_EmissionMap").ToRPC(),
-                Offset = material.GetTextureOffset("_EmissionMap").ToRPC()
-            };
-
-            protoMat.AlphaClip = material.GetFloat("_Cutoff");
-            
-            // use VRCFallback as a proxy for shader type (for now)
-            // TODO: handle more than just VRChat shaders
-            var tag = material.GetTag("VRCFallback", false);
-            p.BlendMode blendMode = p.BlendMode.Opaque;
-            p.CullMode cullMode = p.CullMode.Back;
-            
-            if (tag.Contains("Cutout")) blendMode = p.BlendMode.Cutout;
-            else if (tag.Contains("Transparent")) blendMode = p.BlendMode.Alpha;
-            else if (tag.Contains("Fade")) blendMode = p.BlendMode.Fade;
-            
-            if (tag.Contains("DoubleSided")) cullMode = p.CullMode.None;
-            
-            protoMat.BlendMode = blendMode;
-            protoMat.CullMode = cullMode;
-
-            return protoMat;
+            return null;
         }
 
         private p.AssetID BakeEmissionMask(Material material, Texture2D emissionMap, Texture2D? emissionMask)

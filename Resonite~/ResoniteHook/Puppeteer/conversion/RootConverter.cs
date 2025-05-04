@@ -219,9 +219,11 @@ public partial class RootConverter : IDisposable
         textureComponent.URL.Value = uri;
         textureComponent.IsNormalMap.Value = texture.IsNormalMap;
 
-        var resizeTask = ResizeTextureIfNeeded(textureComponent, texture);
-        Defer(PHASE_FINALIZE, () => resizeTask);
-        
+        if (texture.HasMaxResolution)
+        {
+            textureComponent.MaxSize.Value = (int) texture.MaxResolution;
+        }
+
         return textureComponent;
     }
 

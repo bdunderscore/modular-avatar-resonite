@@ -56,6 +56,8 @@ message Material {
   BlendMode blend_mode = 9;
   optional float alpha_clip = 10;
   CullMode cull_mode = 11;
+  optional AssetID matcap_texture = 12;
+  optional Color matcap_color = 13;
   // TODO - should we represent alpha mask textures?
   
   //uint32 render_queue = 3;
