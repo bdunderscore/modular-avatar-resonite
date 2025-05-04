@@ -80,10 +80,6 @@ internal static class RigNaming
             if (slot != null) 
             {
                 slot.Name = name;
-
-                var dynVar = slot.AttachComponent<DynamicReferenceVariable<Slot>>();
-                dynVar.Reference.Target = slot;
-                dynVar.VariableName.Value = "NDMF/humanoid." + slot.Name;
             }
         }
 

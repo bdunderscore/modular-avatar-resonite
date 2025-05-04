@@ -49,8 +49,8 @@ public class MeshLoadingFilter
 
             var bvDriver = slot.AttachComponent<BooleanValueDriver<string>>();
             eqDriver.Target.Target = bvDriver.State;
-            bvDriver.TrueValue.Value = "NDMF/MeshNotLoaded";
-            bvDriver.FalseValue.Value = "NDMF/MeshLoaded";
+            bvDriver.TrueValue.Value = ResoNamespaces.LoadingGate_NotLoaded;
+            bvDriver.FalseValue.Value = null;
 
             var dynVar = slot.AttachComponent<DynamicValueVariable<bool>>();
             bvDriver.TargetField.Target = dynVar.VariableName;
@@ -58,7 +58,7 @@ public class MeshLoadingFilter
             dynVar.OverrideOnLink.Value = true;
 
             var driver = renderer.Slot.AttachComponent<DynamicValueVariableDriver<bool>>();
-            driver.VariableName.Value = "NDMF/MeshNotLoaded";
+            driver.VariableName.Value = ResoNamespaces.LoadingGate_NotLoaded;
             driver.DefaultValue.Value = true;
             driver.Target.Target = renderer.EnabledField;
         }
@@ -69,7 +69,7 @@ public class MeshLoadingFilter
         notDriver.TargetField.Target = spinner.ActiveSelf_Field;
         notDriver.FalseValue.Value = true;
         notDriver.TrueValue.Value = false;
-        spinnerDriver.VariableName.Value = "NDMF/MeshNotLoaded";
+        spinnerDriver.VariableName.Value = ResoNamespaces.LoadingGate_NotLoaded;
         spinnerDriver.Target.Target = notDriver.State;
         spinnerDriver.DefaultValue.Value = true;
 

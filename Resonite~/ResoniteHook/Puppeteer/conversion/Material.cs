@@ -145,7 +145,7 @@ public partial class RootConverter
         void BindField<T>(IField<T> matField)
         {
             var exemplarField = xsExemplar.TryGetField<T>(matField.Name) ?? throw new Exception($"Field {matField.Name} not found in exemplar");
-            var variableName = "NDMF/XiexeToonMaterialTemplate." + matField.Name;
+            var variableName = ResoNamespaces.XSToonTemplate + matField.Name;
             
             if (!exemplarField.IsDriven)
             {

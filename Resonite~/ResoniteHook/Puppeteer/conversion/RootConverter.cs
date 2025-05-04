@@ -19,69 +19,46 @@ using pm = nadena.dev.ndmf.proto.mesh;
 
 public partial class RootConverter : IDisposable
 {
-    private Dictionary<p::AssetID, f.IWorldElement> _assets = new();
-    private Dictionary<p::ObjectID, f.IWorldElement> _objects = new();
+    private TranslateContext _context;
 
-    private f.Slot _root;
-    private f.Slot _assetRoot;
+    private Dictionary<p::AssetID, f.IWorldElement> _assets => _context.Assets;
+    private Dictionary<p::ObjectID, f.IWorldElement> _objects => _context.Objects;
 
-    private readonly f::Engine _engine;
-    private readonly f::World _world;
+    private f.Slot _root => _context.Root;
+    private f.Slot _assetRoot => _context.AssetRoot;
+
+    private f::Engine _engine => _context.Engine;
+    private f::World _world => _context.World;
 
     private T? Asset<T>(p::AssetID? id) where T : class
     {
-        if (id == null) return null;
-        
-        if (!_assets.TryGetValue(id, out var elem))
-        {
-            return null;
-        }
-
-        if (elem is not T) throw new InvalidOperationException($"Expected {typeof(T).Name}, got {elem.GetType().Name}");
-
-        return (T)elem;
+        return _context.Asset<T>(id);
     }
     
     private RefID AssetRefID<T>(p::AssetID? id) where T: class
     {
-        return (Asset<T>(id) as f.IWorldElement)?.ReferenceID ?? RefID.Null;
+        return _context.AssetRefID<T>(id);
     }
 
     internal T? Object<T>(p::ObjectID? id) where T: class, f.IWorldElement
     {
-        if (id == null) return null;
-        
-        if (!_objects.TryGetValue(id, out var elem))
-        {
-            return null;
-        }
-
-        if (elem is not T) throw new InvalidOperationException($"Expected {typeof(T).Name}, got {elem.GetType().Name}");
-
-        return (T)elem;
+        return _context.Object<T>(id);
     }
     
     private RefID ObjectRefID<T>(p::ObjectID? id) where T: class, f.IWorldElement
     {
-        return Object<T>(id)?.ReferenceID ?? RefID.Null;
+        return _context.ObjectRefID<T>(id);
     }
     
     public RootConverter(f::Engine engine, f::World world)
     {
         InitComponentTypes();
-        _engine = engine;
-        _world = world;
+        _context = new TranslateContext(engine, world);
     }
 
     public void Dispose()
     {
-        _world.Coroutines.StartTask(async () =>
-        {
-            await new f::ToWorld();
-
-            _root?.Destroy();
-            _assetRoot?.Destroy();
-        });
+        _context.Dispose();
     }
 
     public Task Convert(p.ExportRoot exportRoot, string path)
@@ -98,13 +75,19 @@ public partial class RootConverter : IDisposable
 
     private async Task _ConvertSync(p.ExportRoot exportRoot, string path)
     {
-        _assetRoot = _world.RootSlot.AddSlot("__Assets");
+        _context.AssetRoot = _world.RootSlot.AddSlot("__Assets");
 
         await ConvertAssets(exportRoot.Assets);
 
-        _root = await ConvertGameObject(exportRoot.Root, _world.RootSlot);
+        // temporarily put the settings in the asset root, until we build the real root
+        // (this ensures it's cleaned up in dispose)
+        _context.Root = _context.AssetRoot;
+        _context.SettingsNode = CreateSettingsNode();
+        
+        _context.Root = await ConvertGameObject(exportRoot.Root, _world.RootSlot);
 
         _assetRoot.SetParent(_root);
+        _context.SettingsNode.SetParent(_root);
         
         // Reset root transform
         _root.Position_Field.Value = new float3();
@@ -116,7 +99,7 @@ public partial class RootConverter : IDisposable
         _root.AttachComponent<SimpleAvatarProtection>();
         _root.AttachComponent<f.ObjectRoot>();
         var dynamicVariableSpace = _root.AttachComponent<f.DynamicVariableSpace>();
-        dynamicVariableSpace.SpaceName.Value = "NDMF";
+        dynamicVariableSpace.SpaceName.Value = ResoNamespaces.ModularAvatarNamespace;
         dynamicVariableSpace.OnlyDirectBinding.Value = true;
         
         SavedGraph savedGraph = _root.SaveObject(f.DependencyHandling.CollectAssets);
