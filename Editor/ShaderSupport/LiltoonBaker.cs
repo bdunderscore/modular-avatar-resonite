@@ -1069,9 +1069,6 @@ namespace nadena.dev.ndmf.platform.resonite
             }
             outTexture = new Texture2D(width, height);
 
-            var clonedBakeMat = AssetDatabase.GenerateUniqueAssetPath("Assets/test_mat.asset");
-            AssetDatabase.CreateAsset(new Material(material), clonedBakeMat);
-
             var bufRT = RenderTexture.active;
             var dstTexture = RenderTexture.GetTemporary(width, height);
             Graphics.Blit(srcTexture, dstTexture, material);
@@ -1080,9 +1077,6 @@ namespace nadena.dev.ndmf.platform.resonite
             outTexture.Apply();
             RenderTexture.active = bufRT;
             RenderTexture.ReleaseTemporary(dstTexture);
-
-            var texClone = Object.Instantiate(outTexture);
-            AssetDatabase.CreateAsset(texClone, AssetDatabase.GenerateUniqueAssetPath("Assets/test_tex.asset"));
         }
         #endregion
 
