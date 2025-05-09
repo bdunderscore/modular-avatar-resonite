@@ -62,7 +62,7 @@ public class Launcher
         {
             throw new ArgumentNullException(nameof(pipeName), "Pipe name cannot be null");
         }
-         
+
         ConfigurePaths();
 
         System.Console.WriteLine("Starting Resonite Launcher");
@@ -165,34 +165,41 @@ public class Launcher
 
     private IntPtr DllImportResolver(string libraryname, Assembly assembly, DllImportSearchPath? searchpath)
     {
-        var so = libraryname;
-        var dll = libraryname;
-        if (!dll.EndsWith(".dll"))
-        {
-            dll += ".dll";
-        }
-        if (!so.EndsWith(".so"))
-        {
-            so += ".so";
-
-        }
+        var dllNames = GetDynamicLinkLibraryFileNames(libraryname).ToArray();
         foreach (var dllPath in dllPaths)
         {
-            try
+            foreach (var name in dllNames)
             {
-                var h = NativeLibrary.Load(dllPath + dll, assembly, searchpath);
-                if (h != 0) { return h; }
+                var path = dllPath + name;
+                if (File.Exists(path) is false) { continue; }
+
+                try
+                {
+                    var h = NativeLibrary.Load(path, assembly, searchpath);
+                    if (h != 0) { return h; }
+                }
+                catch (DllNotFoundException) { }
             }
-            catch (DllNotFoundException) {  }
-            try
-            {
-                var h = NativeLibrary.Load(dllPath + so, assembly, null);
-                if (h != 0) { return h; }
-            }
-            catch (DllNotFoundException) { }
         }
 
         return IntPtr.Zero;
+    }
+    private IEnumerable<string> GetDynamicLinkLibraryFileNames(string libName)
+    {
+        string trimLibName = libName;
+        if (trimLibName.EndsWith(".dll")) { trimLibName = trimLibName.Replace(".dll", null); }
+
+        yield return $"{trimLibName}.dll";
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            yield return $"{trimLibName}.so";
+            yield return $"lib{trimLibName}.so";
+        }
+        // if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        // {
+        //     yield return $"{trimLibName}.dylib";
+        //     yield return $"lib{trimLibName}.dylib";
+        // }
     }
 
     private Assembly? OnResolveFailed(object? sender, ResolveEventArgs args)
