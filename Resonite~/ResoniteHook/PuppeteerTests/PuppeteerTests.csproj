@@ -21,20 +21,30 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Launcher\Launcher.csproj" />
-      <ProjectReference Include="..\Puppeteer\Puppeteer.csproj" />
+        <ProjectReference Include="..\Launcher\Launcher.csproj" />
+        <ProjectReference Include="..\Puppeteer\Puppeteer.csproj" />
     </ItemGroup>
 
+    <PropertyGroup>
+        <ResoniteDir Condition="Exists('../../ResoniteDir')">../../ResoniteDir</ResoniteDir>
+        <ResoniteDir Condition="Exists('C:\Program Files (x86)\Steam\steamapps\common\Resonite')">C:\Program Files (x86)\Steam\steamapps\common\Resonite</ResoniteDir>
+    </PropertyGroup>
     <ItemGroup>
-      <Reference Include="Elements.Assets">
-        <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\Elements.Assets.dll</HintPath>
-      </Reference>
-      <Reference Include="Elements.Core">
-        <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\Elements.Core.dll</HintPath>
-      </Reference>
-      <Reference Include="FrooxEngine">
-        <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\FrooxEngine.dll</HintPath>
-      </Reference>
+        <Reference Include="Elements.Assets">
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/Elements.Assets.dll</HintPath>
+        </Reference>
+        <Reference Include="Elements.Core">
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/Elements.Core.dll</HintPath>
+        </Reference>
+        <Reference Include="FrooxEngine">
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/FrooxEngine.dll</HintPath>
+        </Reference>
     </ItemGroup>
+
+  <PropertyGroup>
+    <OutDir>bin</OutDir>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+  </PropertyGroup>
 
 </Project>

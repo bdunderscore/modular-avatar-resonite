@@ -45,8 +45,4 @@ internal class Program
         await new TaskCompletionSource().Task;
     }
 
-    private static void InitAssimp(string resoDirectory)
-    {
-        AssimpLibrary.Instance.LoadLibrary(null, resoDirectory + "\\assimp.dll");
-    }
 }

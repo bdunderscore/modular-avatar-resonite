@@ -10,12 +10,18 @@
         <IsDeploymentTarget>true</IsDeploymentTarget>
     </PropertyGroup>
     <ItemGroup>
-      <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+        <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1"/>
     </ItemGroup>
     <ItemGroup>
-      <None Remove="Data\Instance.lock" />
-      <None Remove="Data\Data.litedb" />
-      <None Remove="Cache\Cache\l49zrdgq876te5z0" />
+        <None Remove="Data\Instance.lock" />
+        <None Remove="Data\Data.litedb" />
+        <None Remove="Cache\Cache\l49zrdgq876te5z0" />
     </ItemGroup>
+
+  <PropertyGroup>
+    <OutDir>bin</OutDir>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+  </PropertyGroup>
 
 </Project>

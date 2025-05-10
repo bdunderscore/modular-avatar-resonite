@@ -10,96 +10,141 @@
         <IsDeploymentTarget>true</IsDeploymentTarget>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <ResoniteDir Condition="Exists('../../ResoniteDir')">../../ResoniteDir</ResoniteDir>
+        <ResoniteDir Condition="Exists('C:\Program Files (x86)\Steam\steamapps\common\Resonite')">C:\Program Files (x86)\Steam\steamapps\common\Resonite</ResoniteDir>
+    </PropertyGroup>
     <ItemGroup>
         <Reference Include="AssimpNet">
-            <PrivateAssets>all</PrivateAssets><Private>false</Private>
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\AssimpNet.dll</HintPath>
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/AssimpNet.dll</HintPath>
         </Reference>
         <Reference Include="BepuPhysics">
-            <PrivateAssets>all</PrivateAssets><Private>false</Private>
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\BepuPhysics.dll</HintPath>
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
+            <HintPath>$(ResoniteDir)/ResoniteDir/Resonite_Data/Managed/BepuPhysics.dll</HintPath>
         </Reference>
         <Reference Include="Elements.Assets">
-            <PrivateAssets>all</PrivateAssets><Private>false</Private>
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\Elements.Assets.dll</HintPath>
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/Elements.Assets.dll</HintPath>
         </Reference>
         <Reference Include="Elements.Core">
-            <PrivateAssets>all</PrivateAssets><Private>false</Private>
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\Elements.Core.dll</HintPath>
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/Elements.Core.dll</HintPath>
         </Reference>
         <Reference Include="Elements.Quantity">
-            <PrivateAssets>all</PrivateAssets><Private>false</Private>
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\Elements.Quantity.dll</HintPath>
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/Elements.Quantity.dll</HintPath>
         </Reference>
         <Reference Include="FrooxEngine">
-            <PrivateAssets>all</PrivateAssets><Private>false</Private>
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\FrooxEngine.dll</HintPath>
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/FrooxEngine.dll</HintPath>
         </Reference>
         <Reference Include="FrooxEngine.Commands">
-            <PrivateAssets>all</PrivateAssets><Private>false</Private>
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\FrooxEngine.Commands.dll</HintPath>
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/FrooxEngine.Commands.dll</HintPath>
         </Reference>
         <Reference Include="FrooxEngine.Store">
-            <PrivateAssets>all</PrivateAssets><Private>false</Private>
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\FrooxEngine.Store.dll</HintPath>
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/FrooxEngine.Store.dll</HintPath>
         </Reference>
         <Reference Include="FrooxEngine.Weaver">
-            <PrivateAssets>all</PrivateAssets><Private>false</Private>
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\FrooxEngine.Weaver.dll</HintPath>
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/FrooxEngine.Weaver.dll</HintPath>
         </Reference>
         <Reference Include="ProtoFlux.Core">
-            <PrivateAssets>all</PrivateAssets><Private>false</Private>
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\ProtoFlux.Core.dll</HintPath>
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/ProtoFlux.Core.dll</HintPath>
         </Reference>
         <Reference Include="ProtoFlux.Nodes.Core">
-            <PrivateAssets>all</PrivateAssets><Private>false</Private>
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\ProtoFlux.Nodes.Core.dll</HintPath>
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/ProtoFlux.Nodes.Core.dll</HintPath>
         </Reference>
         <Reference Include="ProtoFlux.Nodes.FrooxEngine">
-            <PrivateAssets>all</PrivateAssets><Private>false</Private>
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\ProtoFlux.Nodes.FrooxEngine.dll</HintPath>
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/ProtoFlux.Nodes.FrooxEngine.dll</HintPath>
         </Reference>
         <Reference Include="ProtoFluxBindings">
-            <PrivateAssets>all</PrivateAssets><Private>false</Private>
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\ProtoFluxBindings.dll</HintPath>
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/ProtoFluxBindings.dll</HintPath>
         </Reference>
         <Reference Include="SkyFrost.Base">
-            <PrivateAssets>all</PrivateAssets><Private>false</Private>
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\SkyFrost.Base.dll</HintPath>
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/SkyFrost.Base.dll</HintPath>
         </Reference>
         <Reference Include="SkyFrost.Base.Models">
-            <PrivateAssets>all</PrivateAssets><Private>false</Private>
-            <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\Resonite_Data\Managed\SkyFrost.Base.Models.dll</HintPath>
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/SkyFrost.Base.Models.dll</HintPath>
         </Reference>
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Google.Protobuf" Version="3.30.1" />
         <PackageReference Include="Google.Protobuf.Tools" Version="3.30.1">
-            <PrivateAssets>all</PrivateAssets><Private>false</Private>
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
         </PackageReference>
-        <PackageReference Include="Grpc.AspNetCore.Server" Version="2.70.0"/>
+        <PackageReference Include="Grpc.AspNetCore.Server" Version="2.70.0" />
         <PackageReference Include="Grpc.Tools" Version="2.71.0">
-            <PrivateAssets>all</PrivateAssets><Private>false</Private>
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="GrpcDotNetNamedPipes" Version="3.1.0"/>
-        <PackageReference Include="JetBrains.Annotations" Version="2025.1.0-eap1"/>
+        <PackageReference Include="GrpcDotNetNamedPipes" Version="3.1.0" />
+        <PackageReference Include="JetBrains.Annotations" Version="2025.1.0-eap1" />
     </ItemGroup>
-    
+
     <ItemGroup>
-        <Protobuf Include="..\ResoPuppetSchema\proto\*.proto" LinkBase="proto" ProtoRoot="..\ResoPuppetSchema"
-                  AdditionalImportDirs="$(PkgGoogle_Protobuf_Tools)\tools"/>
-        <Protobuf Update="..\ResoPuppetSchema\proto\dynamics.proto">
-          <Link>proto\dynamics.proto</Link>
+        <Protobuf Include="../ResoPuppetSchema/proto/*.proto" LinkBase="proto" ProtoRoot="../ResoPuppetSchema" AdditionalImportDirs="$(PkgGoogle_Protobuf_Tools)/tools" GrpcServices="Server" />
+        <Protobuf Update="../ResoPuppetSchema/proto/dynamics.proto">
+            <Link>proto/dynamics.proto</Link>
         </Protobuf>
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="..\ResoPuppetSchema\">
-        <Link>ResoPuppetSchema</Link>
-      </Folder>
-      <Folder Include="obj\Debug\" />
+        <Folder Include="../ResoPuppetSchema/">
+            <Link>ResoPuppetSchema</Link>
+        </Folder>
+        <Folder Include="obj/Debug/" />
     </ItemGroup>
+
+    <PropertyGroup>
+        <UNAssimpVersion>5.4.1</UNAssimpVersion>
+        <FreeImageVersion>4.3.6</FreeImageVersion>
+        <OpenRAVersion>1.0.11</OpenRAVersion>
+        <SteamAudioNativeVersion>4.5.3</SteamAudioNativeVersion>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageDownload Include="Ultz.Native.Assimp" Version="[$(UNAssimpVersion)]"/>
+        <PackageDownload Include="FreeImage-dotnet-core" Version="[$(FreeImageVersion)]" />
+        <PackageDownload Include="OpenRA-Freetype6" Version="[$(OpenRAVersion)]" />
+        <PackageDownload Include="SteamAudio.NET.Natives" Version="[$(SteamAudioNativeVersion)]" />
+    </ItemGroup>
+    <Target Name="CopyNativeLibraries" AfterTargets="Build">
+        <Copy SourceFiles="$(NuGetPackageRoot)/ultz.native.assimp/$(UNAssimpVersion)/runtimes/linux-x64/native/libassimp.so.5" DestinationFolder="$(OutDir)" />
+        <Copy SourceFiles="$(NuGetPackageRoot)/freeimage-dotnet-core/$(FreeImageVersion)/runtimes/ubuntu.16.04-x64/native/FreeImage.so" DestinationFolder="$(OutDir)" />
+        <Copy SourceFiles="$(NuGetPackageRoot)/openra-freetype6/$(OpenRAVersion)/native/linux-x64/freetype6.so" DestinationFolder="$(OutDir)" />
+        <Copy SourceFiles="$(NuGetPackageRoot)/steamaudio.net.natives/$(SteamAudioNativeVersion)/runtimes/linux-x64/native/libphonon.so" DestinationFolder="$(OutDir)" />
+    </Target>
+
+    <PropertyGroup>
+        <OutDir>bin</OutDir>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    </PropertyGroup>
 
 </Project>

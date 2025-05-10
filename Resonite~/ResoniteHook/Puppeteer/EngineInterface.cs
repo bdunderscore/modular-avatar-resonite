@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Runtime.InteropServices;
 using Assimp.Unmanaged;
 using FrooxEngine;
 
@@ -73,7 +74,16 @@ public class EngineController : IAsyncDisposable
 
     private void InitAssimp()
     {
-        AssimpLibrary.Instance.LoadLibrary(null, ResoniteDirectory + "\\assimp.dll");
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            AssimpLibrary.Instance.LoadLibrary(null, ResoniteDirectory + "/assimp.dll");
+            return;
+        }
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            AssimpLibrary.Instance.LoadLibrary(null, "./libassimp.so.5");
+            return;
+        }
     }
 
     public async ValueTask DisposeAsync()
