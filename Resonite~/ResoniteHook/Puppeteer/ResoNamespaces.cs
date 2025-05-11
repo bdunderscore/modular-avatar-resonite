@@ -4,6 +4,10 @@ public class ResoNamespaces
 {
     public const string ModularAvatarNamespace = "modular_avatar";
     public const string ModularAvatarNamespacePrefix = ModularAvatarNamespace + "/";
+
+    public const string AvatarRoot = ModularAvatarNamespacePrefix + "AvatarRoot";
+    public const string SettingsRoot = ModularAvatarNamespacePrefix + "AvatarSettingsRoot";
+    
     public const string HumanBoneRef = ModularAvatarNamespacePrefix + "BoneRef_";
     public const string HumanBonePose = ModularAvatarNamespacePrefix + "BonePose_";
     public const string Config_EyeSwing = ModularAvatarNamespacePrefix + "EyeSwing";

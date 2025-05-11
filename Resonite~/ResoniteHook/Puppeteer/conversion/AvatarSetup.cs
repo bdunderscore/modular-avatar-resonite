@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Reflection;
 using Assimp = Assimp;
 using Elements.Core;
+using FrooxEngine;
 using FrooxEngine.CommonAvatar;
 using FrooxEngine.FinalIK;
 using FrooxEngine.Store;
@@ -116,7 +117,6 @@ public partial class RootConverter
         Defer(PHASE_POSTPROCESS, () => new FaceMeshReferenceFilter(_context).Apply(spec));
         Defer(PHASE_POSTPROCESS, () => new ThumbnailAssetProviderFilter(_context).Apply());
         Defer(PHASE_POSTPROCESS, () => new RenderSettingsFilter(_context).Apply());
-        Defer(PHASE_POSTPROCESS, () => new HandIsolationFilter(_context).Apply());
         Defer(PHASE_RESOLVE_REFERENCES, () => new BoneAnnotationsFilter(_context).Apply(spec));
 
         return null;
@@ -180,15 +180,30 @@ public partial class RootConverter
         if (_settingsRoot != null) return _settingsRoot;
         
         _settingsRoot = _root.AddSlot("<color=#00ffff>Avatar Settings</color>");
-        var copier = _settingsRoot.AddSlot("Settings Copier");
-        var task = copier.LoadObjectAsync(new Uri(CloudSpawnAssets.SettingsCopier));
+        
+        // Create core systems node
+        var coreSys = _root.AddSlot("Core Systems");
+        var task = coreSys.LoadObjectAsync(new Uri(CloudSpawnAssets.CoreSystems));
+        
+        var settingsField = _settingsRoot.AttachComponent<f.ReferenceField<f.Slot>>();
+        settingsField.Reference.Target = _settingsRoot;
+        
+        var settingsVar = _settingsRoot.AttachComponent<f.DynamicReferenceVariable<f.Slot>>();
+        settingsVar.VariableName.Value = ResoNamespaces.SettingsRoot;
+        settingsVar.Reference.DriveFrom(settingsField.Reference);
         
         Defer(PHASE_AWAIT_CLOUD_SPAWN, () => task);
         Defer(PHASE_FINALIZE, () =>
         {
             _settingsRoot.SetParent(_root, false);
-            _settingsRoot.Tag = "NDMFAvatarSettings";
-            _root.Tag = "NDMFAvatarRoot";
+            coreSys.SetParent(_root, false);
+            coreSys.LocalPosition = default;
+            coreSys.LocalRotation = Quaternion.Identity;
+            coreSys.LocalScale = float3.One;
+            
+            _settingsRoot.LocalPosition = default;
+            _settingsRoot.LocalRotation = Quaternion.Identity;
+            _settingsRoot.LocalScale = float3.One;
         });
 
         return _settingsRoot;

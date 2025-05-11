@@ -2,6 +2,6 @@
 
 public static class CloudSpawnAssets
 {
-    public const string SettingsCopier = "resrec:///U-1Nj73SRfaDY/R-f029bc80-4b30-42ef-9297-9c479eaff45e";
+    public const string CoreSystems = "resrec:///U-1Nj73SRfaDY/R-bd749fb1-2e9d-481c-b6d2-4bf76da071dd";
     public const string LoadingSpinner = "resrec:///U-1Nj73SRfaDY/R-c507ae1e-fb6c-4da6-bdbc-8048b06e7ff7";
 }

@@ -3,6 +3,7 @@ using System.Reflection;
 using Elements.Assets;
 using Assimp = Assimp;
 using Elements.Core;
+using FrooxEngine;
 using FrooxEngine.CommonAvatar;
 using FrooxEngine.FinalIK;
 using FrooxEngine.Store;
@@ -103,6 +104,12 @@ public partial class RootConverter : IDisposable
         var dynamicVariableSpace = _root.AttachComponent<f.DynamicVariableSpace>();
         dynamicVariableSpace.SpaceName.Value = ResoNamespaces.ModularAvatarNamespace;
         dynamicVariableSpace.OnlyDirectBinding.Value = true;
+
+        var avatarRootVar = _root.AttachComponent<f.DynamicReferenceVariable<f.Slot>>();
+        var avatarRootField = _root.AttachComponent<f.ReferenceField<f.Slot>>();
+        avatarRootVar.VariableName.Value = ResoNamespaces.AvatarRoot;
+        avatarRootField.Reference.Target = _root;
+        avatarRootVar.Reference.DriveFrom(avatarRootField.Reference);
         
         SavedGraph savedGraph = _root.SaveObject(f.DependencyHandling.CollectAssets);
         Record record = RecordHelper.CreateForObject<Record>(_root.Name, "", null);
