@@ -92,6 +92,12 @@ namespace nadena.dev.ndmf.platform.resonite
 
         private async Task BuildAvatar()
         {
+            if (!DotNetCheck.CheckDotNetVersions())
+            {
+                EditorWindow.GetWindow<DotNetInstallWindow>().Show();
+                return;
+            }
+            
             // Start the server in the background
             using var client = RPCClientController.ClientHandle();
             
