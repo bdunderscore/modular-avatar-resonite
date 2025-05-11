@@ -6,7 +6,9 @@ using Elements.Core;
 using FrooxEngine.CommonAvatar;
 using FrooxEngine.FinalIK;
 using FrooxEngine.Store;
+using Google.Protobuf;
 using Google.Protobuf.Collections;
+using nadena.dev.resonity.remote.puppeteer.misc;
 using SkyFrost.Base;
 using Record = SkyFrost.Base.Record;
 
@@ -50,10 +52,10 @@ public partial class RootConverter : IDisposable
         return _context.ObjectRefID<T>(id);
     }
     
-    public RootConverter(f::Engine engine, f::World world)
+    public RootConverter(f::Engine engine, f::World world, StatusStream stream)
     {
         InitComponentTypes();
-        _context = new TranslateContext(engine, world);
+        _context = new TranslateContext(engine, world, stream);
     }
 
     public void Dispose()
@@ -61,7 +63,7 @@ public partial class RootConverter : IDisposable
         _context.Dispose();
     }
 
-    public Task Convert(p.ExportRoot exportRoot, string path)
+    public Task Convert(p.ExportRoot exportRoot)
     {
         if (_assetRoot != null) throw new InvalidOperationException("Already converted");
         
@@ -69,11 +71,11 @@ public partial class RootConverter : IDisposable
         {
             await new f::ToWorld();
 
-            await _ConvertSync(exportRoot, path);
+            await _ConvertSync(exportRoot);
         });
     }
 
-    private async Task _ConvertSync(p.ExportRoot exportRoot, string path)
+    private async Task _ConvertSync(p.ExportRoot exportRoot)
     {
         _context.AssetRoot = _world.RootSlot.AddSlot("__Assets");
 
@@ -107,9 +109,17 @@ public partial class RootConverter : IDisposable
 
         await new f.ToBackground();
 
-        using (var stream = new FileStream(path, FileMode.Create))
+        using (var stream = new MemoryStream())
         {
-            await f.PackageCreator.BuildPackage(_engine, record, savedGraph, stream, false);
+            // BuildPackage tries to close the stream, which prevents us from streaming data back to unity;
+            // filter out this close call.
+            var wrapper = new BlockClosureStream(stream);
+            await f.PackageCreator.BuildPackage(_engine, record, savedGraph, wrapper, false);
+            stream.Flush();
+            
+            // ReSharper disable once MethodHasAsyncOverload
+            var bytes = ByteString.CopyFrom(stream.GetBuffer(), 0, (int)stream.Length);
+            _context.StatusStream.SendCompletedAvatar(bytes);
         }
     }
 

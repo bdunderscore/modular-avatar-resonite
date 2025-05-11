@@ -119,14 +119,20 @@ public class EntryPoint : nadena.dev.ndmf.proto.rpc.ResoPuppeteer.ResoPuppeteerB
         return result.Task;
     }
 
-    public override async Task<Empty> ConvertObject(ConvertObjectRequest request, ServerCallContext context)
+    public override async Task ConvertObject(ConvertObjectRequest request, IServerStreamWriter<ConversionStatusMessage> responseStream, ServerCallContext context)
     {
-        using var converter = new RootConverter(_engine, _world);
+        using var tick = _tickController.StartRPC();
+        await using var statusStream = new StatusStream(responseStream);
+        using var converter = new RootConverter(_engine, _world, statusStream);
 
-        using var _tick = _tickController.StartRPC();
-        await converter.Convert(request.Root, request.Path);
-
-        return new Empty();
+        try
+        {
+            await converter.Convert(request.Root);
+        }
+        catch (Exception e)
+        {
+            statusStream.SendUnlocalizedError(e.ToString());
+        }
     }
 
     public override Task<Empty> Ping(Empty request, ServerCallContext context)

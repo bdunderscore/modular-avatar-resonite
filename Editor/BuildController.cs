@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using nadena.dev.ndmf.preview;
@@ -20,7 +21,7 @@ namespace nadena.dev.ndmf.platform.resonite
         // If not completed, we're busy; don't allow a new task to start
         private Task busyState = Task.CompletedTask;
         
-        public string LastTempPath, LastAvatarName;
+        public string? LastTempPath, LastAvatarName;
         public string State = "Ready to Build";
         
         public event Action? OnStateUpdate;
@@ -51,18 +52,55 @@ namespace nadena.dev.ndmf.platform.resonite
 
                 Progress.Report(progressId, 0, "Generating resonite package");
                 var tempPath = System.IO.Path.Combine(Application.temporaryCachePath, "tmp.resonitepackage");
-                var response = client.ConvertObjectAsync(new()
-                {
-                    Path = tempPath,
-                    Root = root
-                }, cancellationToken: RPCClientController.CancelAfter(120_000));
+
+                using var stream = client.ConvertObject(new() { Root = root });
+                var token = CancellationToken.None;
+                
                 State = "Generating resonite package";
                 NDMFSyncContext.RunOnMainThread(_ => OnStateUpdate?.Invoke(), null);
-                await response;
 
-                State = "Build finished!";
-                LastAvatarName = root.Root.Name;
-                LastTempPath = tempPath;
+                bool successful = false;
+                while (await stream.ResponseStream.MoveNext(token))
+                {
+                    var msg = stream.ResponseStream.Current;
+                    if (msg.HasCompletedResonitePackage)
+                    {
+                        // Write to tempPath
+                        using (var fs = System.IO.File.Create(tempPath))
+                        {
+                            await fs.WriteAsync(msg.CompletedResonitePackage.Memory);
+                            successful = true;
+                        }
+
+                        break;
+                    } else if (msg.HasProgressMessage)
+                    {
+                        State = msg.ProgressMessage;
+                        NDMFSyncContext.RunOnMainThread(_ => OnStateUpdate?.Invoke(), null);
+                    } else if (msg.HasUnlocalizedError)
+                    {
+                        // TODO:  NDMF error reporting
+                        Debug.LogError(msg.UnlocalizedError);
+                        NDMFSyncContext.RunOnMainThread(_ => OnStateUpdate?.Invoke(), null);
+                    } else if (msg.StructuredError != null)
+                    {
+                        // TODO
+                    }
+                }
+
+                if (successful)
+                {
+                    State = "Build finished!";
+                    LastAvatarName = root.Root.Name;
+                    LastTempPath = tempPath;
+                    NDMFSyncContext.RunOnMainThread(_ => OnStateUpdate?.Invoke(), null);
+                }
+                else
+                {
+                    State = "Build failed; check console log for details";
+                    LastAvatarName = null;
+                    LastTempPath = null;
+                }
 
                 return tempPath;
             }

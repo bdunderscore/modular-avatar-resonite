@@ -9,6 +9,9 @@ using pm = nadena.dev.ndmf.proto.mesh;
 
 public sealed class TranslateContext : IDisposable
 {
+    private StatusStream _statusStream;
+    public StatusStream StatusStream => _statusStream;
+    
     private Dictionary<p::AssetID, f.IWorldElement> _assets = new();
     private Dictionary<p::ObjectID, f.IWorldElement> _objects = new();
     
@@ -25,10 +28,11 @@ public sealed class TranslateContext : IDisposable
     public f::Engine Engine => _engine;
     public f::World World => _world;
 
-    public TranslateContext(f::Engine engine, f::World world)
+    public TranslateContext(f::Engine engine, f::World world, StatusStream statusStream)
     {
         _engine = engine;
         _world = world;
+        _statusStream = statusStream;
     }
     
     public T? Asset<T>(p::AssetID? id) where T : class

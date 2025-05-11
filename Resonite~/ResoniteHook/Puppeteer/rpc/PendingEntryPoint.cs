@@ -28,10 +28,17 @@ public class PendingEntryPoint : nadena.dev.ndmf.proto.rpc.ResoPuppeteer.ResoPup
         return await (await GetBackend(context)).Ping(request, context);
     }
 
-    public override async Task<Empty> ConvertObject(ConvertObjectRequest request, ServerCallContext context)
+    public override async Task ConvertObject(ConvertObjectRequest request, IServerStreamWriter<ConversionStatusMessage> responseStream, ServerCallContext context)
     {
-        return await (await GetBackend(context)).ConvertObject(request, context);
+        await responseStream.WriteAsync(new()
+        {
+            Seq = -1,
+            Final = false,
+            ProgressMessage = "Starting FrooxEngine backend..."
+        });
+        await (await GetBackend(context)).ConvertObject(request, responseStream, context);
     }
+
 
     public override Task<Empty> Shutdown(Empty request, ServerCallContext context)
     {

@@ -9,10 +9,34 @@ import "proto/base_types.proto";
 service ResoPuppeteer {
   rpc Ping (google.protobuf.Empty) returns (google.protobuf.Empty);
   rpc Shutdown (google.protobuf.Empty) returns (google.protobuf.Empty);
-  rpc ConvertObject (ConvertObjectRequest) returns (google.protobuf.Empty);
+  rpc ConvertObject (ConvertObjectRequest) returns (stream ConversionStatusMessage);
 }
 
 message ConvertObjectRequest {
   ExportRoot root = 1;
-  string path = 2;
+}
+
+message ConversionStatusMessage {
+  int32 seq = 1;
+  bool final = 2;
+  
+  oneof status {
+    string progress_message = 3;
+    string unlocalized_error = 4;
+    bytes completed_resonite_package = 5;
+    NDMFError structured_error = 6;
+  }
+}
+
+message NDMFError {
+  string localization_key = 1;
+  repeated ErrorDetailElement detail_element = 2;
+}
+
+message ErrorDetailElement {
+  oneof element {
+    string text = 1;
+    ObjectID object_id = 2;
+    AssetID asset_id = 3;
+  }
 }
