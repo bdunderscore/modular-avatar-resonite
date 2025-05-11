@@ -16,29 +16,24 @@ using FrooxEngine;
 
 internal class Program
 {
-    internal static async Task Main(string[] args)
-    {
-        throw new Exception();
-    }
-    
     // ReSharper disable once UnusedMember.Global
     internal static async Task Launch(
-        string resoDirectory,
-        string tempDirectory,
-        string pipeName,
-        int? autoShutdownTimeout
-    ) {
-        UniLog.OnLog += l => System.Console.WriteLine("[LOG] " + l);
-        UniLog.OnError += l => System.Console.WriteLine("[ERROR] " + l);
-        UniLog.OnWarning += l => System.Console.WriteLine("[WARN] " + l);
+        StartupArgs args
+    )
+    {
+        var resoDirectory = args.resoniteInstallDirectory;
+        var pipeName = args.pipeName;
+        var autoShutdownTimeout = args.autoShutdownTimeout;
+        
+        var logStreamEntryPoint = new LogStreamEntryPoint();
 
         var pendingEP = new PendingEntryPoint();
-        new RPCServer(pipeName).Start(pendingEP);
+        new RPCServer(pipeName).Start(pendingEP, logStreamEntryPoint);
         
         var engineController = new EngineController(resoDirectory);
+        if (args.dataAndCacheRoot != null) engineController.TempDirectory = args.dataAndCacheRoot;
         await engineController.Start();
         
-        Console.WriteLine("==== Startup complete ====");
         pendingEP.SetBackend(new EntryPoint(engineController, autoShutdownTimeout));
 
         // wait forever; the RPC server will do a hard shutdown when needed

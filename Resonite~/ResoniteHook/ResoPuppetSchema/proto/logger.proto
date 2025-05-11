@@ -1,0 +1,34 @@
+syntax = "proto3";
+option csharp_namespace = "nadena.dev.ndmf.proto.rpc";
+
+package nadena.dev.ndmf.proto;
+
+import public "google/protobuf/empty.proto";
+import public "google/protobuf/timestamp.proto";
+
+service LogStream {
+  rpc Listen(FetchLogsRequest) returns (stream LogEntry);
+  rpc CheckConnected(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+message FetchLogsRequest {
+  optional int32 start_seq = 1;
+}
+
+message TrimLogsRequest {
+  int32 start_seq = 1;
+}
+
+message LogEntry {
+  int32 seq = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string message = 3;
+  LogLevel level = 4;
+}
+
+enum LogLevel {
+  LOG_LEVEL_DEBUG = 0;
+  LOG_LEVEL_INFO = 1;
+  LOG_LEVEL_WARNING = 2;
+  LOG_LEVEL_ERROR = 3;
+}

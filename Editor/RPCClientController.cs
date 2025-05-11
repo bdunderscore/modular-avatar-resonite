@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using GrpcDotNetNamedPipes;
 using JetBrains.Annotations;
 using nadena.dev.ndmf.proto.rpc;
+using NUnit.Framework.Internal;
+using UnityEngine;
 using Debug = UnityEngine.Debug;
 
 namespace nadena.dev.ndmf.platform.resonite
@@ -26,14 +28,60 @@ namespace nadena.dev.ndmf.platform.resonite
         private static Process? _lastProcess;
         private static bool _isDebugBackend;
 
+        private static CancellationTokenSource _logStreamCancellationToken = new();
+        
         private static ResoPuppeteer.ResoPuppeteerClient OpenChannel(string pipeName)
         {
             var channel = new NamedPipeChannel(".", pipeName, new NamedPipeChannelOptions()
             {
                 ImpersonationLevel = TokenImpersonationLevel.None,
             });
+
+            var logStream = new LogStream.LogStreamClient(channel);
+            _logStreamCancellationToken?.Cancel();
+            _logStreamCancellationToken = new CancellationTokenSource();
+            var token = _logStreamCancellationToken.Token;
+            Task.Run(() => ForwardLogs(logStream, token));
+            
             return new ResoPuppeteer.ResoPuppeteerClient(channel);
         }
+
+        private static async Task ForwardLogs(LogStream.LogStreamClient client, CancellationToken token)
+        {
+            using var stream = client.Listen(new() { });
+            int lastSeq = -2;
+            while (!token.IsCancellationRequested && await stream.ResponseStream.MoveNext(token))
+            {
+                var log = stream.ResponseStream.Current;
+                if (log.Seq == lastSeq)
+                {
+                    // Due to a bug in gRPCNamedPipes, if the server disconnects we end up in a infinite loop processing
+                    // the last seen log message. Work around this by aborting if we see a message twice.
+                    break;
+                }
+
+                lastSeq = log.Seq;
+                
+                switch (log.Level)
+                {
+                    case LogLevel.Debug:
+                        #if NDMF_DEBUG
+                            UnityEngine.Debug.Log("[MA-Resonite] " + log.Message);
+                        #endif
+                            break;
+                    case LogLevel.Info:
+                        UnityEngine.Debug.Log("[MA-Resonite] " + log.Message);
+                        break;
+                    case LogLevel.Warning:
+                        UnityEngine.Debug.LogWarning("[MA-Resonite] " + log.Message);
+                        break;
+                    default:
+                    case LogLevel.Error:
+                        UnityEngine.Debug.LogError("[MA-Resonite] " + log.Message);
+                        break;
+                }
+            }
+        } 
 
         public static ClientHandle ClientHandle()
         {
@@ -123,25 +171,18 @@ namespace nadena.dev.ndmf.platform.resonite
                 throw new FileNotFoundException("Resonite Launcher not found", exe);
             }
 
-            var tempDir = Path.Combine(Path.GetTempPath(), "ResonitePuppet");
-            // Clean up old temp dir
-            if (Directory.Exists(tempDir))
-            {
-                try
-                {
-                    Directory.Delete(tempDir, true);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Failed to delete temp dir: {e}");
-                }
-            }
+            var libraryPath = Path.Combine(Directory.GetParent(Application.dataPath)!.FullName, "Library");
+            var tempDir = Path.Combine(libraryPath, "ResonitePuppet");
+            Directory.CreateDirectory(tempDir);
+
+            var logPath = Path.Combine(tempDir, "puppeteer.log.txt");
 
             var args = new string[]
             {
                 "--pipe-name", pipeName,
                 "--temp-directory", tempDir,
-                "--auto-shutdown-timeout", "30"
+                "--auto-shutdown-timeout", "30",
+                "--log-path", "\"" + logPath + "\""
             };
 
             var startInfo = new ProcessStartInfo
@@ -150,7 +191,7 @@ namespace nadena.dev.ndmf.platform.resonite
                 Arguments = string.Join(" ", args),
                 WorkingDirectory = cwd,
                 UseShellExecute = false,
-                CreateNoWindow = false,
+                CreateNoWindow = true,
             };
 
             _lastProcess = new Process

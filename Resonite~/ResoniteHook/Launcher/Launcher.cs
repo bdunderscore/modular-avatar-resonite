@@ -1,6 +1,8 @@
 ﻿using System.CommandLine;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using nadena.dev.resonity.remote.puppeteer;
+using nadena.dev.resonity.remote.puppeteer.logging;
 
 namespace nadena.dev.resonity.remote.bootstrap;
 
@@ -17,6 +19,7 @@ public class Launcher
     public string? tempDirectory = ".";
     public string? pipeName = "MA_RESO_PUPPETEER_DEV";
     public int? autoShutdownTimeout;
+    public string? logPath;
 
     public void ConfigurePaths(string? resonitePath = null)
     {
@@ -43,7 +46,12 @@ public class Launcher
     public Task Launch(string[] args)
     {
         ParseArgs(args);
-
+        
+        if (logPath != null)
+        {
+            LogController.OpenLogfile(logPath);
+        }
+        
         if (tempDirectory == null)
         {
             throw new ArgumentNullException(nameof(tempDirectory), "Temp directory cannot be null");
@@ -88,7 +96,15 @@ public class Launcher
             throw new Exception("Could not find Main method in Puppeteer.Program");
         }
 
-        return (Task)main.Invoke(null, [resoniteBase, tempDirectory, pipeName, autoShutdownTimeout])!;
+        var startupArgs = new StartupArgs()
+        {
+            resoniteInstallDirectory = resoniteBase,
+            dataAndCacheRoot = tempDirectory,
+            pipeName = pipeName,
+            autoShutdownTimeout = autoShutdownTimeout,
+        };
+        
+        return (Task)main.Invoke(null, [startupArgs])!;
     }
 
     private void ParseArgs(string[] args)
@@ -105,14 +121,18 @@ public class Launcher
         var autoShutdownTimeout = new Option<int?>(
             name: "--auto-shutdown-timeout",
             description: "Time in seconds to wait before shutting down resonite. Defaults to not shutting down.");
+        var logPath = new Option<string?>(
+            name: "--log-path",
+            description: "Path to the log file. Defaults to logging to the console only.");
 
         var rootCommand = new RootCommand("Modular Avatar Resonite backend");
         rootCommand.AddOption(resoInstallOption);
         rootCommand.AddOption(tempDirectory);
         rootCommand.AddOption(pipeName);
         rootCommand.AddOption(autoShutdownTimeout);
+        rootCommand.AddOption(logPath);
         
-        rootCommand.SetHandler((string? resoInstallPath, string? tempDirectory, string? pipeName, int? autoShutdownTimeout) =>
+        rootCommand.SetHandler((string? resoInstallPath, string? tempDirectory, string? pipeName, int? autoShutdownTimeout, string? logPath) =>
         {
             if (resoInstallPath != null)
             {
@@ -134,11 +154,11 @@ public class Launcher
                 this.autoShutdownTimeout = autoShutdownTimeout;
             }
             
-            Console.WriteLine("resoInstallPath: " + this.resoniteBase);
-            Console.WriteLine("tempDirectory: " + this.tempDirectory);
-            Console.WriteLine("pipeName: " + this.pipeName);
-            Console.WriteLine("autoShutdownTimeout: " + this.autoShutdownTimeout);
-        }, resoInstallOption, tempDirectory, pipeName, autoShutdownTimeout);
+            if (logPath != null)
+            {
+                this.logPath = logPath;
+            }
+        }, resoInstallOption, tempDirectory, pipeName, autoShutdownTimeout, logPath);
 
         rootCommand.Invoke(args);
     }

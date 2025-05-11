@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <OutputType>Exe</OutputType>
+        <OutputType>WinExe</OutputType>
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
@@ -16,6 +16,9 @@
       <None Remove="Data\Instance.lock" />
       <None Remove="Data\Data.litedb" />
       <None Remove="Cache\Cache\l49zrdgq876te5z0" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\PuppeteerCommon\PuppeteerCommon.csproj" />
     </ItemGroup>
 
 </Project>
