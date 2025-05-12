@@ -15,6 +15,7 @@ using nadena.dev.ndmf.proto.rpc;
 using NUnit.Framework.Internal;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
+using OSPlatform = System.Runtime.InteropServices.OSPlatform;
 
 namespace nadena.dev.ndmf.platform.resonite
 {
