@@ -118,6 +118,7 @@ public partial class RootConverter
         Defer(PHASE_POSTPROCESS, () => new ThumbnailAssetProviderFilter(_context).Apply());
         Defer(PHASE_POSTPROCESS, () => new RenderSettingsFilter(_context).Apply());
         Defer(PHASE_POSTPROCESS, () => new AvatarPoseNodeRefFilter(_context).Apply());
+        Defer(PHASE_POSTPROCESS, () => new MiscRefFilter(_context).Apply());
         Defer(PHASE_RESOLVE_REFERENCES, () => new BoneAnnotationsFilter(_context).Apply(spec));
 
         return null;
