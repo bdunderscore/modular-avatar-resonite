@@ -189,7 +189,10 @@ public class Launcher
         string trimLibName = libName;
         if (trimLibName.EndsWith(".dll")) { trimLibName = trimLibName.Replace(".dll", null); }
 
-        yield return $"{trimLibName}.dll";
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            yield return $"{trimLibName}.dll";
+        }
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             yield return $"{trimLibName}.so";
