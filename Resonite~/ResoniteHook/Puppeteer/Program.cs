@@ -13,6 +13,7 @@ namespace nadena.dev.resonity.remote.puppeteer;
 
 using Elements.Core;
 using FrooxEngine;
+using nadena.dev.resonity.remote.puppeteer.logging;
 
 internal class Program
 {
@@ -34,15 +35,21 @@ internal class Program
 
         var pendingEP = new PendingEntryPoint();
         new RPCServer(pipeName).Start(pendingEP, logStreamEntryPoint);
-        
-        var engineController = new EngineController(resoDirectory);
-        if (args.dataAndCacheRoot != null) engineController.TempDirectory = args.dataAndCacheRoot;
-        await engineController.Start();
-        
-        pendingEP.SetBackend(new EntryPoint(engineController, autoShutdownTimeout));
+        try
+        {
+            var engineController = new EngineController(resoDirectory);
+            if (args.dataAndCacheRoot != null) engineController.TempDirectory = args.dataAndCacheRoot;
+            await engineController.Start();
 
-        // wait forever; the RPC server will do a hard shutdown when needed
-        await new TaskCompletionSource().Task;
+            pendingEP.SetBackend(new EntryPoint(engineController, autoShutdownTimeout));
+
+            // wait forever; the RPC server will do a hard shutdown when needed
+            await new TaskCompletionSource().Task;
+        }
+        catch (Exception e)
+        {
+            LogController.Log(LogController.LogLevel.Error, e.ToString());
+        }
     }
 
     private static void InitAssimp(string resoDirectory)
