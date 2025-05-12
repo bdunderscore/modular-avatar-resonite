@@ -22,7 +22,7 @@ namespace nadena.dev.ndmf.platform.resonite
             
             string[] output = process.StandardOutput.ReadToEnd().Split("\n");
 
-            CheckPassed = output.Any(s => s.StartsWith("Microsoft.WindowsDesktop.App 9."));
+            CheckPassed = output.Any(s => s.StartsWith("Microsoft.WindowsDesktop.App 9.") || s.StartsWith("Microsoft.NETCore.App 9."));
 
             return CheckPassed;
         }
