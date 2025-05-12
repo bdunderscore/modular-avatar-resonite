@@ -87,6 +87,9 @@ public partial class RootConverter
 
         if (src.HasAlphaClip) mat.AlphaClip.Value = src.AlphaClip;
 
+        // Transparent materials that started out as liltoon tend to break without this...
+        mat.ZWrite.Value = ZWrite.On;
+        
         switch (src.CullMode)
         {
             case p.CullMode.Back: mat.Culling.Value = f.Culling.Back; break;
