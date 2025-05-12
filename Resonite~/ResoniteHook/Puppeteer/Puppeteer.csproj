@@ -130,25 +130,6 @@
     </ItemGroup>
 
     <PropertyGroup>
-        <UNAssimpVersion>5.4.1</UNAssimpVersion>
-        <FreeImageVersion>4.3.6</FreeImageVersion>
-        <OpenRAVersion>1.0.11</OpenRAVersion>
-        <SteamAudioNativeVersion>4.5.3</SteamAudioNativeVersion>
-    </PropertyGroup>
-    <ItemGroup>
-        <PackageDownload Include="Ultz.Native.Assimp" Version="[$(UNAssimpVersion)]"/>
-        <PackageDownload Include="FreeImage-dotnet-core" Version="[$(FreeImageVersion)]" />
-        <PackageDownload Include="OpenRA-Freetype6" Version="[$(OpenRAVersion)]" />
-        <PackageDownload Include="SteamAudio.NET.Natives" Version="[$(SteamAudioNativeVersion)]" />
-    </ItemGroup>
-    <Target Name="CopyNativeLibraries" AfterTargets="Build">
-        <Copy SourceFiles="$(NuGetPackageRoot)/ultz.native.assimp/$(UNAssimpVersion)/runtimes/linux-x64/native/libassimp.so.5" DestinationFolder="$(OutDir)" />
-        <Copy SourceFiles="$(NuGetPackageRoot)/freeimage-dotnet-core/$(FreeImageVersion)/runtimes/ubuntu.16.04-x64/native/FreeImage.so" DestinationFolder="$(OutDir)" />
-        <Copy SourceFiles="$(NuGetPackageRoot)/openra-freetype6/$(OpenRAVersion)/native/linux-x64/freetype6.so" DestinationFolder="$(OutDir)" />
-        <Copy SourceFiles="$(NuGetPackageRoot)/steamaudio.net.natives/$(SteamAudioNativeVersion)/runtimes/linux-x64/native/libphonon.so" DestinationFolder="$(OutDir)" />
-    </Target>
-
-    <PropertyGroup>
         <OutDir>bin</OutDir>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>

@@ -29,7 +29,8 @@ namespace nadena.dev.ndmf.platform.resonite
         private static bool _isDebugBackend;
 
         private static CancellationTokenSource _logStreamCancellationToken = new();
-        
+        internal const string RESOPUPPET_DIR = "Packages/nadena.dev.modular-avatar.resonite/ResoPuppet~";
+
         private static ResoPuppeteer.ResoPuppeteerClient OpenChannel(string pipeName)
         {
             var channel = new NamedPipeChannel(".", pipeName, new NamedPipeChannelOptions()
@@ -157,13 +158,16 @@ namespace nadena.dev.ndmf.platform.resonite
                 await Task.Delay(250); // give it some time to exit
             }
 
-            var cwd = Path.GetFullPath("Packages/nadena.dev.modular-avatar.resonite/ResoPuppet~");
+            var cwd = Path.GetFullPath(RESOPUPPET_DIR);
             var exe = Path.Combine(cwd, "Launcher" + _executableBinaryExtension);
 
             if (!File.Exists(exe))
             {
                 throw new FileNotFoundException("Resonite Launcher not found", exe);
             }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                await ResolveSharedObject.DoResolve();
 
             var libraryPath = Path.Combine(Directory.GetParent(Application.dataPath)!.FullName, "Library");
             var tempDir = Path.Combine(libraryPath, "ResonitePuppet");
