@@ -16,6 +16,11 @@ using FrooxEngine;
 
 internal class Program
 {
+    public static void Main(string[] args)
+    {
+        throw new Exception("Puppeteer cannot be launched directly; use launcher.exe");
+    }
+    
     // ReSharper disable once UnusedMember.Global
     internal static async Task Launch(
         StartupArgs args

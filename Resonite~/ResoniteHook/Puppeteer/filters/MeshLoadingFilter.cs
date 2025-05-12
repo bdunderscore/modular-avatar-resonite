@@ -12,25 +12,23 @@ using FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Variables;
 using FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Math.Random;
 using FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes.Operators;
 using nadena.dev.resonity.remote.puppeteer.dynamic_flux;
+using nadena.dev.resonity.remote.puppeteer.logging;
+using nadena.dev.resonity.remote.puppeteer.rpc;
 
 namespace nadena.dev.resonity.remote.puppeteer.filters;
 
-public class MeshLoadingFilter
+public class MeshLoadingFilter(TranslateContext context)
 {
-    private Slot _avatarRoot;
-
-    public MeshLoadingFilter(Slot avatarRoot)
-    {
-        this._avatarRoot = avatarRoot;
-    }
-
+    private Slot _avatarRoot => context.Root!;
+    
     public async Task Apply()
     {
         var centeredRoot = _avatarRoot.FindChild("CenteredRoot");
         var assets = centeredRoot?.FindChild("__Assets");
         if (assets == null) return;
 
-        var gateRoot = _avatarRoot.AddSlot("Mesh loading gate");
+        var settingsRoot = context.SettingsNode!;
+        var gateRoot = settingsRoot.AddSlot("Avatar Loading Display");
         var spinnerTask = SpawnLoadingSpinner(gateRoot);
         
         var renderers = _avatarRoot.GetComponentsInChildren<MeshRenderer>();
@@ -72,18 +70,17 @@ public class MeshLoadingFilter
         spinnerDriver.VariableName.Value = ResoNamespaces.LoadingGate_NotLoaded;
         spinnerDriver.Target.Target = notDriver.State;
         spinnerDriver.DefaultValue.Value = true;
-
-        spinner.GlobalPosition = _avatarRoot.FindChild("Head Proxy")?.GlobalPosition
-                                 ?? (_avatarRoot.GlobalPosition + float3.Up);
     }
 
     private async Task<Slot> SpawnLoadingSpinner(Slot parent)
     {
         var slot = parent.AddSlot("LoadingSpinner");
 
-        Console.WriteLine("==== Spawn loading spinner ==="); 
-        bool result = await slot.LoadObjectAsync(new Uri(CloudSpawnAssets.LoadingSpinner));
-        Console.WriteLine("Result: " + result);
+        bool result = await slot.LoadObjectAsync(new Uri(CloudSpawnAssets.LoadingDisplay));
+        if (!result)
+        {
+            LogController.Log(LogController.LogLevel.Warning, "Failed to load loading display");
+        }
         
         slot.LocalRotation = floatQ.Identity;
         slot.LocalScale = float3.One;
