@@ -23,7 +23,7 @@
         <Reference Include="BepuPhysics">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
-            <HintPath>$(ResoniteDir)/ResoniteDir/Resonite_Data/Managed/BepuPhysics.dll</HintPath>
+            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/BepuPhysics.dll</HintPath>
         </Reference>
         <Reference Include="Elements.Assets">
             <PrivateAssets>all</PrivateAssets>
