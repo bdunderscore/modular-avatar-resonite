@@ -167,9 +167,6 @@ namespace nadena.dev.ndmf.platform.resonite
                 throw new FileNotFoundException("Resonite Launcher not found", exe);
             }
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                await ResolveSharedObject.DoResolve();
-
             var libraryPath = Path.Combine(Directory.GetParent(Application.dataPath)!.FullName, "Library");
             var tempDir = Path.Combine(libraryPath, "ResonitePuppet");
             Directory.CreateDirectory(tempDir);
