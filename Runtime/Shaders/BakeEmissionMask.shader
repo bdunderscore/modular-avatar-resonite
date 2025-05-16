@@ -52,8 +52,11 @@ Shader "Hidden/NDMF/BakeEmission"
             fixed4 frag (v2f i) : SV_Target
             {
                 // sample the texture
-                fixed4 col = tex2D(_EmissionMap, i.uv) * tex2D(_EmissionBlendMask, i.uv_mask);
-                return col;
+                fixed4 maskCol = tex2D(_EmissionMap, i.uv);
+                fixed4 blendMask = tex2D(_EmissionBlendMask, i.uv_mask);
+                maskCol.rgb *= blendMask.rgb;
+                maskCol.rgb *= blendMask.aaa;
+                return maskCol;
             }
             ENDCG
         }
