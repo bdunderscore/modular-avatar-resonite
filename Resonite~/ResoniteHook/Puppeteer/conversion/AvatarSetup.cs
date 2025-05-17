@@ -8,6 +8,7 @@ using FrooxEngine.FinalIK;
 using FrooxEngine.Store;
 using Google.Protobuf.Collections;
 using nadena.dev.resonity.remote.puppeteer.filters;
+using nadena.dev.resonity.remote.puppeteer.logging;
 using SkyFrost.Base;
 using Record = SkyFrost.Base.Record;
 
@@ -297,6 +298,10 @@ public partial class RootConverter
             index.GlobalPosition - wrist.GlobalPosition,
             thumb.GlobalPosition - wrist.GlobalPosition
         );
+        if (cross.Y < 0)
+        {
+            cross = -cross;
+        }
 
         return new HandCoordinates()
         {
@@ -505,6 +510,10 @@ public partial class RootConverter
         // Undo the effects of the toolshelf's local position
         var toolshelfLocalPos = new float3(0.02f, 0.01f, -0.14f);
         toolAnchor.GlobalPosition = toolAnchor.LocalPointToGlobal(-toolshelfLocalPos);
+        
+        LogController.Log(LogController.LogLevel.Info, "[ToolAnchor] Under slot " + slotHand.Name +
+            " @ " + slotHand.GlobalPosition + " anchor global pos " + toolAnchor.GlobalPosition +
+            " anchor local pos " + toolAnchor.LocalPosition + " fwd " + forward + " up " + up);
     }
 
     private float MeasureHandSize(p.Arm bonesLeftArm, out f.Slot? longestFinger)
