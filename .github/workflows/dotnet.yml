@@ -70,15 +70,43 @@ jobs:
     - name: Test
       run: cd "${{ env.RPC_SERVER_SRC }}"; dotnet test --no-build --verbosity normal
 
+    - name: Standalone build
+      run: |
+        dotnet publish -o ./ResoPuppet~ --no-restore --verbosity normal --self-contained true --runtime win-x64 "${{ env.RPC_SERVER_SRC }}/Launcher"
+        dotnet publish -o ./ResoPuppet~ --no-restore --verbosity normal --self-contained true --runtime win-x64 "${{ env.RPC_SERVER_SRC }}/Puppeteer"
 
     - name: Assert that no resonite source files were copied into the output artifact
       run: |
-        $allowedFiles = @("Google.Protobuf.dll", "Grpc.AspNetCore.Server.dll", "Grpc.Core.Api.sll", "Grpc.Net.Common.dll", "GrpcDotNetNamedPipes.dll", "JetBrains.Annotations.dll")
+        $ok = 1
+        $allowedPatterns = @(
+          "Google.Protobuf.dll",
+          "Grpc.AspNetCore.Server.dll",
+          "Grpc.Core.Api.sll",
+          "Grpc.Net.Common.dll",
+          "GrpcDotNetNamedPipes.dll",
+          "JetBrains.Annotations.dll",
+          "System.*",
+          "Microsoft.*",
+          "mscorlib.dll",
+          "netstandard.dll"
+        )
         Get-ChildItem -Path "${{ env.RESONITE_ASSEMBLY_PATH }}" | ForEach-Object {
-          if ($allowedFiles -notcontains $_.Name -and (Test-Path "${{ env.RPC_SERVER_SRC }}/Puppeteer/bin/Debug/net9.0/$($_.Name)")) {
-            Write-Error "Files from ${{ env.RESONITE_PATH }} found in ${{ env.RPC_SERVER_SRC }}/Puppeteer/bin/Debug/net9.0: $($_.Name)"
-            exit 1
+          $fileName = $_.Name
+          $allowed = $false
+          foreach ($pattern in $allowedPatterns) {
+            if ($fileName -like $pattern) {
+              $allowed = $true
+              break
+            }
           }
+          if (-not $allowed -and (Test-Path "ResoPuppet~/$fileName")) {
+            Write-Warning "Files from ${{ env.RESONITE_PATH }} found in ResoPuppet~/: $fileName"
+            $ok = 0
+          }
+        }
+        if ($ok -eq 0) {
+          Write-Error "Resonite source files were copied into the output artifact"
+          exit 1
         }
         
     - name: Copy into final package location
