@@ -304,6 +304,7 @@ namespace nadena.dev.ndmf.platform.resonite
             bones.LeftArm.Thumb = new()
             {
                 Proximal = MapObject(uAnimator.GetBoneTransform(HumanBodyBones.LeftThumbProximal)),
+                Intermediate = MapObject(uAnimator.GetBoneTransform(HumanBodyBones.LeftThumbIntermediate)),
                 Distal = MapObject(uAnimator.GetBoneTransform(HumanBodyBones.LeftThumbDistal))
             };
             
@@ -339,6 +340,7 @@ namespace nadena.dev.ndmf.platform.resonite
             bones.RightArm.Thumb = new()
             {
                 Proximal = MapObject(uAnimator.GetBoneTransform(HumanBodyBones.RightThumbProximal)),
+                Intermediate = MapObject(uAnimator.GetBoneTransform(HumanBodyBones.RightThumbIntermediate)),
                 Distal = MapObject(uAnimator.GetBoneTransform(HumanBodyBones.RightThumbDistal))
             };
             

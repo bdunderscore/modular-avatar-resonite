@@ -51,6 +51,7 @@ public partial class RootConverter
         Defer(PHASE_RIG_SETUP, () =>
         {
             // Change all bone names to be what BipedRig expects (and any non-humanoid bones become temporary names)
+            // We also need to move any children of humanoid bones in order to avoid breaking FingerPoser configuration
 
             using (var scope = RigNaming.Scope(this, _root, avDesc))
             {

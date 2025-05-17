@@ -1,4 +1,5 @@
-﻿using FrooxEngine;
+﻿using Elements.Core;
+using FrooxEngine;
 using nadena.dev.ndmf.proto;
 using Finger = nadena.dev.ndmf.proto.Finger;
 
@@ -45,7 +46,7 @@ internal static class RigNaming
         
         void NameFinger(string prefix, string fingerName, Finger finger)
         {
-            prefix += fingerName + "_";
+            prefix += "finger_" + fingerName + "_";
             
             NameBone(prefix + "metacarpal", finger.Metacarpal);
             NameBone(prefix + "proximal", finger.Proximal);
@@ -70,9 +71,11 @@ internal static class RigNaming
 
     public static IDisposable Scope(RootConverter converter, Slot root, AvatarDescriptor avDesc)
     {
-        List<(Slot, string)> priorNames = new();
+        List<Action> revertActions = new();
 
         VisitSlot(root);
+
+        HashSet<Slot> humanoidBones = new();
 
         foreach (var (id, name) in GenerateHumanoidBoneNames(avDesc))
         {
@@ -80,14 +83,51 @@ internal static class RigNaming
             if (slot != null) 
             {
                 slot.Name = name;
+                humanoidBones.Add(slot);
             }
         }
 
-        return new RevertNames(priorNames);
+        HashSet<Slot> retainSlots = new(humanoidBones);
+        
+        // Make sure all parents of humanoid bones don't get reparented
+        foreach (var slot in humanoidBones.ToList())
+        {
+            foreach (var parent in slot.EnumerateParents())
+            {
+                if (parent is Slot s) retainSlots.Add(s);
+            }
+        }
+
+        foreach (var slot in humanoidBones)
+        {
+            foreach (var child in slot.Children.ToList())
+            {
+                if (child.Parent != root && !retainSlots.Contains(child))
+                {
+                    var priorParent = child.Parent;
+                    var priorLocalPos = child.LocalPosition;
+                    var priorLocalRot = child.LocalRotation;
+                    var priorLocalScale = child.LocalScale;
+                    
+                    revertActions.Add(() => {
+                        child.SetParent(priorParent, false);
+                        child.LocalPosition = priorLocalPos;
+                        child.LocalRotation = priorLocalRot;
+                        child.LocalScale = priorLocalScale;
+                    });
+                    
+                    child.SetParent(child.World.RootSlot, false);
+                }
+            }
+        }
+        
+        return new Revert(revertActions);
 
         void VisitSlot(Slot slot)
         {
-            priorNames.Add((slot, slot.Name));
+            var priorName = slot.Name;
+            revertActions.Add(() => { slot.Name = priorName; });
+            
             var tmpName = "tmp";
             foreach (char c in slot.Name)
             {
@@ -104,19 +144,13 @@ internal static class RigNaming
     }
     
     
-    private class RevertNames : IDisposable
+    private class Revert(List<Action> actions) : IDisposable
     {
-        private List<(Slot, string)> _priorNames;
-        public RevertNames(List<(Slot, string)> priorNames)
-        {
-            _priorNames = priorNames;
-        }
-        
         public void Dispose()
         {
-            foreach (var (slot, name) in _priorNames)
+            foreach (var action in actions)
             {
-                slot.Name = name;
+                action();
             }
         }
     }
