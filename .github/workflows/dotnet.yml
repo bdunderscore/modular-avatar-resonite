@@ -81,7 +81,7 @@ jobs:
         $allowedPatterns = @(
           "Google.Protobuf.dll",
           "Grpc.AspNetCore.Server.dll",
-          "Grpc.Core.Api.sll",
+          "Grpc.Core.Api.dll",
           "Grpc.Net.Common.dll",
           "GrpcDotNetNamedPipes.dll",
           "JetBrains.Annotations.dll",
