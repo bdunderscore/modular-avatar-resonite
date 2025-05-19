@@ -19,6 +19,8 @@ public class ResoNamespaces
     public const string XSToonTemplate = ModularAvatarNamespacePrefix + "xs_toon_template.";
 
     public const string LoadingGate_NotLoaded = ModularAvatarNamespacePrefix + "MeshNotLoaded";
+    public const string AvatarWorn = ModularAvatarNamespacePrefix + "AvatarWorn";
+    public const string AvatarWornLocal = ModularAvatarNamespacePrefix + "AvatarWornLocal";
 
     public const string AvatarPoseNodePrefix = ModularAvatarNamespacePrefix + "AvatarPoseNode.";
 }

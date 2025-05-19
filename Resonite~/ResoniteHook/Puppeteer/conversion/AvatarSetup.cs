@@ -113,6 +113,8 @@ public partial class RootConverter
     {
         await SetupRig(slot, spec);
         
+        Console.WriteLine("=== TEST ===");
+        
         Defer(PHASE_AVATAR_SETUP, () => SetupAvatarDeferred(slot, spec));
         Defer(PHASE_POSTPROCESS, () => new MeshLoadingFilter(_context).Apply());
         Defer(PHASE_POSTPROCESS, () => new EyeSwingVariableFilter(_context).Apply());
@@ -121,6 +123,7 @@ public partial class RootConverter
         Defer(PHASE_POSTPROCESS, () => new RenderSettingsFilter(_context).Apply());
         Defer(PHASE_POSTPROCESS, () => new AvatarPoseNodeRefFilter(_context).Apply());
         Defer(PHASE_POSTPROCESS, () => new MiscRefFilter(_context).Apply());
+        Defer(PHASE_POSTPROCESS, () => new FirstPersonVisibleFilter(_context).Apply());
         Defer(PHASE_RESOLVE_REFERENCES, () => new BoneAnnotationsFilter(_context).Apply(spec));
 
         return null;

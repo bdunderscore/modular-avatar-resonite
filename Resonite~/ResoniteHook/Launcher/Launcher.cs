@@ -81,7 +81,7 @@ public class Launcher
         catch (Exception e)
         {
             var path = Assembly.GetExecutingAssembly().Location;
-            path = Path.Combine(Path.GetDirectoryName(path)!, "../../Puppeteer/bin/Debug/net9.0", "Puppeteer.dll");
+            path = Path.Combine(Path.GetDirectoryName(path)!, "../../Puppeteer/bin", "Puppeteer.dll");
 
             puppeteerAssembly = Assembly.LoadFile(path);
         }

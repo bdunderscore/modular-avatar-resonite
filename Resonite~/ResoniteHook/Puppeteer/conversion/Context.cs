@@ -28,11 +28,32 @@ public sealed class TranslateContext : IDisposable
     public f::Engine Engine => _engine;
     public f::World World => _world;
 
+    public Dictionary<string, List<(p::ObjectID, p.Component)>> ProtoComponents { get; } = new();
+
     public TranslateContext(f::Engine engine, f::World world, StatusStream statusStream)
     {
         _engine = engine;
         _world = world;
         _statusStream = statusStream;
+    }
+
+    public void BuildComponentIndex(p.GameObject root)
+    {
+        foreach (var c in root.Components)
+        {
+            var typeName = Google.Protobuf.WellKnownTypes.Any.GetTypeName(c.Component_.TypeUrl);
+            if (!ProtoComponents.TryGetValue(typeName, out var components))
+            {
+                ProtoComponents[typeName] = components = new List<(p::ObjectID, p.Component)>();
+            }
+            
+            components.Add((root.Id, c));
+        }
+
+        foreach (var child in root.Children)
+        {
+            BuildComponentIndex(child);
+        }
     }
     
     public T? Asset<T>(p::AssetID? id) where T : class

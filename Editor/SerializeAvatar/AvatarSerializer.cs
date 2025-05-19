@@ -7,6 +7,7 @@ using System.Linq;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using nadena.dev.modular_avatar.core;
+using nadena.dev.modular_avatar.resonite.runtime;
 using nadena.dev.ndmf.multiplatform.components;
 using nadena.dev.ndmf.proto.mesh;
 using nadena.dev.ndmf.proto.rpc;
@@ -39,6 +40,8 @@ namespace nadena.dev.ndmf.platform.resonite
         private List<UnityEngine.Object> _tempObjects = new();
 
         private List<IShaderTranslator> _shaderTranslators;
+
+        private Transform? _avatarHead;
 
         internal AvatarSerializer()
         {
@@ -124,6 +127,11 @@ namespace nadena.dev.ndmf.platform.resonite
         {
             try
             {
+                if (go.TryGetComponent<Animator>(out var a))
+                {
+                    _avatarHead = a.GetBoneTransform(HumanBodyBones.Head);
+                }
+                
                 _exportRoot.Root = CreateTransforms(go.transform);
 
                 if (go.TryGetComponent<Animator>(out var animator))
@@ -172,6 +180,8 @@ namespace nadena.dev.ndmf.platform.resonite
                 Scale = t.localScale.ToRPC()
             };
 
+            bool hasVHA = false;
+            
             foreach (Component c in t.gameObject.GetComponents<Component>())
             {
                 IMessage? protoComponent;
@@ -189,7 +199,11 @@ namespace nadena.dev.ndmf.platform.resonite
                     case PortableDynamicBone pdb:
                         protoComponent = TranslateDynamicBone(pdb);
                         break;
-                        
+                    case TagVisibleInFirstPerson:
+                        protoComponent = new p.VisibleInFirstPerson() { Visible = true };
+                        hasVHA = true;
+                        break;
+                    
                     default: continue;
                 }
 
@@ -205,6 +219,16 @@ namespace nadena.dev.ndmf.platform.resonite
                 protoObject.Components.Add(wrapper);
             }
 
+            if (!hasVHA && _avatarHead == t)
+            {
+                protoObject.Components.Add(new p.Component()
+                {
+                    Enabled = true,
+                    Id = MintObjectID(),
+                    Component_ = Any.Pack(new p.VisibleInFirstPerson() { Visible = false })
+                });
+            }
+            
             foreach (Transform child in t)
             {
                 protoObject.Children.Add(CreateTransforms(child));

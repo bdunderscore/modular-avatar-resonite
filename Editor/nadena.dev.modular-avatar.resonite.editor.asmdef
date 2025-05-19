@@ -7,7 +7,8 @@
         "nadena.dev.modular-avatar.core",
         "nadena.dev.modular-avatar.core.editor",
         "nadena.dev.ndmf.multiplatform.runtime",
-        "lilToon.Editor"
+        "lilToon.Editor",
+        "nadena.dev.modular-avatar.resonite"
     ],
     "includePlatforms": [
         "Editor"

@@ -87,6 +87,7 @@ public partial class RootConverter : IDisposable
         _context.Root = _context.AssetRoot;
         _context.SettingsNode = CreateSettingsNode();
         
+        _context.BuildComponentIndex(exportRoot.Root);
         _context.Root = await ConvertGameObject(exportRoot.Root, _world.RootSlot);
 
         _assetRoot.SetParent(_root);
