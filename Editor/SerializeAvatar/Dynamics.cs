@@ -26,7 +26,7 @@ namespace nadena.dev.ndmf.platform.resonite
         {
             var msg = new p.DynamicBone();
 
-            var root = pdb.Root.Value != null ? pdb.Root.Value.gameObject : pdb.gameObject;
+            var root = pdb.Root ? pdb.Root!.gameObject : pdb.gameObject;
 
             msg.RootTransform = MapObject(root);
             msg.TemplateName = pdb.TemplateName;
