@@ -30,6 +30,8 @@ public class MeshLoadingFilter(TranslateContext context)
         var settingsRoot = context.SettingsNode!;
         var gateRoot = settingsRoot.AddSlot("Avatar Loading Display");
         var spinnerTask = SpawnLoadingSpinner(gateRoot);
+
+        var hiddenLayer = centeredRoot.AttachComponent<HiddenLayer>();
         
         var renderers = _avatarRoot.GetComponentsInChildren<MeshRenderer>();
         foreach (var renderer in renderers)
@@ -52,24 +54,20 @@ public class MeshLoadingFilter(TranslateContext context)
 
             var dynVar = slot.AttachComponent<DynamicValueVariable<bool>>();
             bvDriver.TargetField.Target = dynVar.VariableName;
-            dynVar.Value.Value = false;
+            dynVar.Value.Value = true;
             dynVar.OverrideOnLink.Value = true;
-
-            var driver = renderer.Slot.AttachComponent<DynamicValueVariableDriver<bool>>();
-            driver.VariableName.Value = ResoNamespaces.LoadingGate_NotLoaded;
-            driver.DefaultValue.Value = true;
-            driver.Target.Target = renderer.EnabledField;
         }
+        
+        var driver = hiddenLayer.Slot.AttachComponent<DynamicValueVariableDriver<bool>>();
+        driver.VariableName.Value = ResoNamespaces.LoadingGate_NotLoaded;
+        driver.DefaultValue.Value = false;
+        driver.Target.Target = hiddenLayer.EnabledField;
 
         var spinner = await spinnerTask;
         var spinnerDriver = gateRoot.AttachComponent<DynamicValueVariableDriver<bool>>();
-        var notDriver = gateRoot.AttachComponent<BooleanValueDriver<bool>>();
-        notDriver.TargetField.Target = spinner.ActiveSelf_Field;
-        notDriver.FalseValue.Value = true;
-        notDriver.TrueValue.Value = false;
         spinnerDriver.VariableName.Value = ResoNamespaces.LoadingGate_NotLoaded;
-        spinnerDriver.Target.Target = notDriver.State;
-        spinnerDriver.DefaultValue.Value = true;
+        spinnerDriver.Target.Target = spinner.ActiveSelf_Field;
+        spinnerDriver.DefaultValue.Value = false;
     }
 
     private async Task<Slot> SpawnLoadingSpinner(Slot parent)
