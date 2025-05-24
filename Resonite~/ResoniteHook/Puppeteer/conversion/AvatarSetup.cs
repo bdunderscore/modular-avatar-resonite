@@ -358,7 +358,8 @@ public partial class RootConverter
         var ref_right_hand = field<f.SyncRef<f.Slot>>(avatarCreator, "_rightReference");
         var ref_left_point = field<f.SyncRef<f.Slot>>(avatarCreator, "_leftPoint");
         var ref_right_point = field<f.SyncRef<f.Slot>>(avatarCreator, "_rightPoint");
-
+        var b_useSymmetry = field<f.Sync<bool>>(avatarCreator, "_useSymmetry");
+        
         var baseScale = 0.15f;
         
         var slot_headset = ref_headset.Target;
@@ -380,13 +381,17 @@ public partial class RootConverter
             BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(avatarCreator)!;
         avCreatorScale.Value = handScale;
 
+        // Symmetry breaks on some avatars; since we compute left and right hand positions manually, we can disable
+        // it to avoid issues
+        b_useSymmetry.Value = false;
+        
         // Sleep one frame
         await new f.ToBackground();
         await new f.ToWorld();
         
         slot_headset.LocalPosition= spec.EyePosition.Vec3(); // relative to avatar root
         Console.WriteLine("Local position in head space: " + bone_head.GlobalPointToLocal(slot_headset.GlobalPosition));
-        slot_headset.GlobalRotation = bone_head.GlobalRotation;
+        slot_headset.GlobalRotation = _context.Root!.GlobalRotation;
         
         Console.WriteLine("Head fwd vector: " + bone_head.GlobalDirectionToLocal(Vector3.UnitZ));
         Console.WriteLine("Headset fwd vector: " + slot_headset.GlobalDirectionToLocal(Vector3.UnitZ));
@@ -430,6 +435,13 @@ public partial class RootConverter
         
             await new f.ToWorld();
         }
+        
+                
+        // Symmetry can break some avatars, so break the drives here.
+        slot_right_hand.Position_Field.ActiveLink?.ReleaseLink();
+        slot_right_hand.Rotation_Field.ActiveLink?.ReleaseLink();
+        slot_right_point.Position_Field.ActiveLink?.ReleaseLink();
+        slot_right_point.Rotation_Field.ActiveLink?.ReleaseLink();
         
         slot_right_hand.GlobalPosition = bone_right_hand.GlobalPosition;
         slot_right_hand.GlobalRotation = rightHandRot;
@@ -491,6 +503,11 @@ public partial class RootConverter
             var grabber = hand.FindChild("Grabber");
             //var shelf = hand.FindChild("Shelf"); // TODO
 
+            tooltip.Position_Field.ActiveLink?.ReleaseLink();
+            grabber.Position_Field.ActiveLink?.ReleaseLink();
+            tooltip.Rotation_Field.ActiveLink?.ReleaseLink();
+            grabber.Rotation_Field.ActiveLink?.ReleaseLink();
+            
             tooltip.GlobalPosition = hand.GlobalPosition + fwd * handLength * 1.2f;
             tooltip.GlobalRotation = floatQ.LookRotation(fwd, up);
             grabber.GlobalPosition = hand.GlobalPosition + fwd * (handLength / 2f) - up * (handLength / 2);
@@ -505,8 +522,9 @@ public partial class RootConverter
         // Y+: Towards elbow
         
         var toolAnchor = slotHand.GetComponentsInChildren<f.CommonAvatar.AvatarToolAnchor>()
-            .First(a => a.AnchorPoint.Value == AvatarToolAnchor.Point.Toolshelf)
-            .Slot;
+            .FirstOrDefault(a => a.AnchorPoint.Value == AvatarToolAnchor.Point.Toolshelf)
+            ?.Slot;
+        if (toolAnchor == null) return;
         toolAnchor.GlobalRotation = floatQ.LookRotation(forward, up);
         
         toolAnchor.GlobalPosition = slotHand.GlobalPosition + up * 0.05f;
