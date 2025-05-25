@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Elements.Assets;
 using FrooxEngine.Store;
+using nadena.dev.resonity.remote.puppeteer.misc;
 using nadena.dev.resonity.remote.puppeteer.rpc;
 
 namespace nadena.dev.resonity.remote.puppeteer.filters;
@@ -18,6 +19,31 @@ internal partial class FirstPersonVisibleFilter
     {
         public List<int> AlwaysInvisibleSubmeshes;
         public List<int> CloneToOriginalIndex;
+    }
+
+    void CheckMeshBoneIndices(MeshX mesh)
+    {
+        int boneCount = mesh.BoneCount;
+        int indexCount = mesh.VertexCount;
+
+        for (int i = 0; i < indexCount; i++)
+        {
+            var rawBinding = mesh.RawBoneBindings[i];
+
+            for (int b = 0; b < 4; b++)
+            {
+                rawBinding.GetBinding(b, out var boneIndex, out var weight);
+                if (weight > 0.0)
+                {
+                    if (boneIndex < 0 || boneIndex >= boneCount)
+                    {
+                        throw new ArgumentOutOfRangeException(
+                            $"Mesh has invalid bone index { boneIndex } for vertex {i} bone {b}" +
+                                    $"Bone count is {boneCount}.");
+                    }
+                }
+            }
+        }
     }
     
     private async Task<MeshProcessingResults> ProcessFPVMesh(F.StaticMesh mesh, List<bool> boneToVisible)
@@ -47,7 +73,16 @@ internal partial class FirstPersonVisibleFilter
 
         await new F.ToBackground();
         var meshx = new MeshX(); 
-        meshx.Copy(asset.Data);
+        // meshx.Copy(asset.Data); - this doesn't copy some data for some reason
+
+        using (var stream = new MemoryStream())
+        {
+            var tmp = new BlockClosureStream(stream);
+            asset.Data.Encode(tmp);
+
+            stream.Seek(0, SeekOrigin.Begin);
+            meshx.Decode(stream);
+        }
         
         // determine which submeshes need to be split by looking at which vertices they touch
         bool[] isVertexInvisible = new bool[meshx.VertexCount];
@@ -77,6 +112,8 @@ internal partial class FirstPersonVisibleFilter
             isVertexInvisible[i] = isInvisible;
         }
 
+        CheckMeshBoneIndices(meshx);
+        
         int originalSubmeshCount = meshx.SubmeshCount;
         for (int submeshIndex = 0; submeshIndex < originalSubmeshCount; submeshIndex++)
         {
@@ -136,6 +173,8 @@ internal partial class FirstPersonVisibleFilter
                 results.CloneToOriginalIndex.Add(submeshIndex);
             }
         }
+        
+        CheckMeshBoneIndices(meshx);
         
         // Save meshX and reimport
         string tempFilePath = ctx.Engine.LocalDB.GetTempFilePath(".mesh");
