@@ -100,6 +100,11 @@ public partial class RootConverter
         // TODO: matcap
         // TODO occlusion map?
 
+        if (src.HasUnityRenderQueue)
+        {
+            mat.RenderQueue.Value = src.UnityRenderQueue;
+        }
+        
         BindExemplarValues(mat, _xsExemplar);
 
         return mat;

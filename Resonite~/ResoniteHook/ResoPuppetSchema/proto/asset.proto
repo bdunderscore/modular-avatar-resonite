@@ -60,8 +60,11 @@ message Material {
   optional Color matcap_color = 13;
   // TODO - should we represent alpha mask textures?
   
-  //uint32 render_queue = 3;
-  
+  // Resonite seems to use the same render queue properties as Unity, including the effects on transparency.
+  // While this isn't as portable as we'd like, there's a lot of Unity-based VR games out there, so it makes sense to
+  // support it as optional.
+  optional int32 unity_render_queue = 14;
+
   // TODO...
 }
 
