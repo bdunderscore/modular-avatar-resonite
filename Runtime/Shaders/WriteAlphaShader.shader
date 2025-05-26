@@ -3,6 +3,8 @@ Shader "Hidden/NDMF/WriteAlpha"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        _AlphaMaskScale ("Alpha Mask Scale", Float) = 1.0
+        _AlphaMaskValue ("Alpha Mask Value", Float) = 0.0
     }
     SubShader
     {
@@ -34,6 +36,7 @@ Shader "Hidden/NDMF/WriteAlpha"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
+            float _AlphaMaskScale, _AlphaMaskValue;
 
             v2f vert (appdata v)
             {
@@ -46,7 +49,9 @@ Shader "Hidden/NDMF/WriteAlpha"
             fixed4 frag (v2f i) : SV_Target
             {
                 // sample the texture
-                fixed4 col = fixed4(0,0,0,1) * tex2D(_MainTex, i.uv).r;
+                float alpha =  tex2D(_MainTex, i.uv).r;
+                alpha = saturate(alpha * _AlphaMaskScale + _AlphaMaskValue);
+                fixed4 col = fixed4(0,0,0,1) * alpha;
                 return col;
             }
             ENDCG

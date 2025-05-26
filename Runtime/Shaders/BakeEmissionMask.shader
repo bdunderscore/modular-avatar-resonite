@@ -39,7 +39,7 @@ Shader "Hidden/NDMF/BakeEmission"
 
             sampler2D _EmissionBlendMask;
             float4 _EmissionBlendMask_ST;
-
+            
             v2f vert (appdata v)
             {
                 v2f o;

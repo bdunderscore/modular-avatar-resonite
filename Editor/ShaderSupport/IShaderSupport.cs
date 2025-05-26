@@ -194,7 +194,6 @@ namespace nadena.dev.ndmf.platform.resonite
             
             protoMat.BlendMode = blendMode;
             protoMat.CullMode = cullMode;
-            protoMat.UnityRenderQueue = material.renderQueue;
 
             return true;
         }
@@ -262,6 +261,17 @@ namespace nadena.dev.ndmf.platform.resonite
             tmpMat.SetTexture("_AlphaMask", alphaMask);
             tmpMat.SetTextureScale("_AlphaMask", material.GetTextureScale("_AlphaMask"));
             tmpMat.SetTextureOffset("_AlphaMask", material.GetTextureOffset("_AlphaMask"));
+
+            if (material.HasProperty("_AlphaMaskScale"))
+            {
+                tmpMat.SetFloat("_AlphaMaskScale", material.GetFloat("_AlphaMaskScale"));
+            }
+
+            if (material.HasProperty("_AlphaMaskValue"))
+            {
+                tmpMat.SetFloat("_AlphaMaskValue", material.GetFloat("_AlphaMaskValue"));
+            }
+            
             Graphics.Blit(alphaMask, tempRT, tmpMat);
                 
             // Read back to a texture2d
