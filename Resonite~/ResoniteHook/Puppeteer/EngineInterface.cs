@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using Assimp.Unmanaged;
 using FrooxEngine;
+using SkyFrost.Base;
 
 namespace nadena.dev.resonity.remote.puppeteer;
 
@@ -42,6 +43,11 @@ public class EngineController : IAsyncDisposable
         LaunchOptions options = new LaunchOptions();
         options.DataDirectory = Path.Combine(TempDirectory, "Data");
         options.CacheDirectory = Path.Combine(TempDirectory, "Cache");
+        options.FastCompatibility = true;
+        options.NeverSaveDash = true;
+        options.NeverSaveSettings = true;
+        options.VerboseInit = true;
+        options.DoNotAutoLoadHome = true;
         _engine = new Engine();
 
         bool shutdownRequested = false;
