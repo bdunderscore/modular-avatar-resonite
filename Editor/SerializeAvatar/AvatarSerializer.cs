@@ -648,7 +648,8 @@ namespace nadena.dev.ndmf.platform.resonite
             var bindposes = mesh.bindposes;
             for (int i = 0; i < bindposes.Length; i++)
             {
-                var boneName = refBones?[i]?.gameObject.name ?? "Bone" + i;
+                var refBone = (refBones != null && i < refBones.Length) ? refBones[i] : null;
+                var boneName = refBone != null ? refBone.gameObject.name : "Bone" + i;
                 var mat = new p.Matrix();
                 var pose = bindposes[i];
 
