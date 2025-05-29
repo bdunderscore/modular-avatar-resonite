@@ -2,7 +2,6 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
-using JetBrains.Annotations;
 using nadena.dev.ndmf.proto;
 using UnityEngine;
 using Material = UnityEngine.Material;
@@ -16,6 +15,8 @@ namespace nadena.dev.ndmf.platform.resonite
         public LiltoonShaderSupport(TextureAssetImporter textureImporter) : base(textureImporter)
         {
         }
+        
+        #if MA_LILTOON_PRESENT
 
         public override bool TryTranslateMaterial(Material material, out proto.Material? protoMat)
         {
@@ -94,5 +95,6 @@ namespace nadena.dev.ndmf.platform.resonite
             
             return base.GetMatcapTexture(mat, out matcapTex, out importerReference);
         }
+        #endif
     }
 }

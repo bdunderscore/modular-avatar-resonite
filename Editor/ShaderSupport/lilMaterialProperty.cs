@@ -25,11 +25,10 @@
 
 #nullable enable
 
-using System.Collections.Generic;
+#if MA_LILTOON_PRESENT
+
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using lilToon;
-using UnityEditor;
 using UnityEngine;
 
 namespace nadena.dev.ndmf.platform.resonite
@@ -94,3 +93,4 @@ namespace nadena.dev.ndmf.platform.resonite
         }
     }
 }
+#endif

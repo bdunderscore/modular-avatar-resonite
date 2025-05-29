@@ -26,17 +26,13 @@
 
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Rendering;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Reflection;
 using JetBrains.Annotations;
+#if MA_LILTOON_PRESENT
 using lilToon;
-using Object = UnityEngine.Object;
+#endif
 
 namespace nadena.dev.ndmf.platform.resonite
 {
@@ -44,6 +40,7 @@ namespace nadena.dev.ndmf.platform.resonite
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     internal partial class LiltoonShaderSupport : GenericShaderTranslator
     {
+        #if MA_LILTOON_PRESENT
         private static readonly HashSet<Shader> _lilShaders = new();
         private static readonly List<FieldInfo> _matPropFields = new List<FieldInfo>();
         internal Material Material;
@@ -1080,5 +1077,6 @@ namespace nadena.dev.ndmf.platform.resonite
         }
         #endregion
 
+        #endif
     }
 }

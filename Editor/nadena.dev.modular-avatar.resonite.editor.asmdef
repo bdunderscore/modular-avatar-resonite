@@ -29,6 +29,12 @@
     ],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "jp.lilxyzw.liltoon",
+            "expression": "(0,999999]",
+            "define": "MA_LILTOON_PRESENT"
+        }
+    ],
     "noEngineReferences": false
 }
