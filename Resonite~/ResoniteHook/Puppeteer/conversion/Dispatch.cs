@@ -19,6 +19,7 @@ public partial class RootConverter
     private const int PHASE_POSTPROCESS = 1000;
     private const int PHASE_AWAIT_CLOUD_SPAWN = 2000;
     private const int PHASE_FINALIZE = 10000;
+    private const int PHASE_JUST_BEFORE_PACKAGING = 20000;
     
     private Dictionary<string, ComponentBuilder> ComponentTypes = new();
 
