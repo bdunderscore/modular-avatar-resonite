@@ -80,7 +80,7 @@ public static class MeshTranslator
             meshx.SortTrimAndNormalizeBoneWeights();
             meshx.FillInEmptyBindings(0);
         }
-
+        
         var blendshapeNames = new HashSet<string>();
         foreach (var blendshape in rpcMesh.Blendshapes)
         {
@@ -100,11 +100,9 @@ public static class MeshTranslator
 
             foreach (var frame in blendshape.Frames)
             {
-                if (frame.DeltaNormals.Count > 0) blendshapeX.HasNormals = true;
-                if (frame.DeltaTangents.Count > 0) blendshapeX.HasTangents = true;
-                
                 var frameX = blendshapeX.AddFrame(frame.Weight);
-                frameX.SetPositionDeltas(frame.DeltaPositions.Select(v => (float3)v.Vec3()).ToArray());
+                frameX.SetPositionDeltas(frame.DeltaPositions
+                    .Select(v => (float3)v.Vec3()).ToArray());
                 if (frame.DeltaNormals.Count > 0)
                 {
                     frameX.SetNormalDeltas(frame.DeltaNormals.Select(v => (float3)v.Vec3()).ToArray());
@@ -113,9 +111,22 @@ public static class MeshTranslator
                 {
                     frameX.SetTangentDeltas(frame.DeltaTangents.Select(v => (float3)v.Vec3()).ToArray());
                 }
+                
+                if (frame.DeltaNormals.Count > 0) blendshapeX.HasNormals = true;
+                if (frame.DeltaTangents.Count > 0) blendshapeX.HasTangents = true;
             }
         }
-
+        
+        // Workaround FrooxEngine bug: Set HasNormals/HasTangents on all blendshapes
+        // https://github.com/Yellow-Dog-Man/Resonite-Issues/issues/4547
+        bool anyHasNormals = meshx.BlendShapes.Any(bs => bs.HasNormals);
+        bool anyHasTangents = meshx.BlendShapes.Any(bs => bs.HasTangents);
+        foreach (var bs in meshx.BlendShapes)
+        {
+            bs.HasNormals = anyHasNormals;
+            bs.HasTangents = anyHasTangents;
+        }
+        
         return meshx;
     }  
 }
