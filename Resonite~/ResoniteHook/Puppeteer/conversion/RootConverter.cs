@@ -10,6 +10,7 @@ using FrooxEngine.Store;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
 using nadena.dev.resonity.remote.puppeteer.misc;
+using ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Time;
 using SkyFrost.Base;
 using Record = SkyFrost.Base.Record;
 
@@ -114,6 +115,9 @@ public partial class RootConverter : IDisposable
         
         SavedGraph savedGraph = _root.SaveObject(f.DependencyHandling.CollectAssets);
         Record record = RecordHelper.CreateForObject<Record>(_root.Name, "", null);
+        
+        // Destroy the root object now so we don't keep on generating unnecessary asset variants
+        _root.Destroy();
 
         await new f.ToBackground();
 
@@ -122,7 +126,7 @@ public partial class RootConverter : IDisposable
             // BuildPackage tries to close the stream, which prevents us from streaming data back to unity;
             // filter out this close call.
             var wrapper = new BlockClosureStream(stream);
-            await f.PackageCreator.BuildPackage(_engine, record, savedGraph, wrapper, false);
+            await f.PackageCreator.BuildPackage(_engine, record, savedGraph, wrapper, true);
             stream.Flush();
             
             // ReSharper disable once MethodHasAsyncOverload
@@ -220,38 +224,29 @@ public partial class RootConverter : IDisposable
         textureComponent.URL.Value = uri;
         textureComponent.IsNormalMap.Value = texture.IsNormalMap;
 
-        if (texture.HasMaxResolution)
+        // Initially, we generate asset variants up to a 512x512 size. This ensures that the textures are visible
+        // immediately on import, without blowing up the size of the resonitepackage too much. We set the MaxSize back
+        // to its final value just before we generate the package and destroy the StaticTexture2D.
+        
+        textureComponent.MaxSize.Value = 512;
+        
+        System.Diagnostics.Stopwatch timeout = new();
+        timeout.Start();
+        Defer(PHASE_FINALIZE, async () =>
         {
-            textureComponent.MaxSize.Value = (int) texture.MaxResolution;
-        }
+            while (!textureComponent.IsAssetAvailable && timeout.ElapsedMilliseconds < 10_000)
+            {
+                await new f.ToBackground();
+                await Task.Delay(100);
+                await new f.ToWorld();
+            } 
+        });
+        Defer(PHASE_JUST_BEFORE_PACKAGING, () =>
+        {
+            textureComponent.MaxSize.Value = texture.HasMaxResolution ? (int) texture.MaxResolution : null;
+        });
 
         return textureComponent;
-    }
-
-    private async Task ResizeTextureIfNeeded(f.StaticTexture2D textureComponent, p.Texture texture)
-    {
-        if (!texture.HasMaxResolution) return;
-        
-        while (!textureComponent.IsAssetAvailable)
-        {
-            await new f.NextUpdate();
-        }
-
-        var size = textureComponent.Asset.Size;
-        if (size.x <= texture.MaxResolution && size.y <= texture.MaxResolution) return;
-
-        Console.WriteLine("Resizing texture " + textureComponent.Slot.Name + " to " + texture.MaxResolution);
-
-        try
-        {
-            await textureComponent.Rescale((int)texture.MaxResolution, Filtering.Lanczos3);
-        }
-        catch (Exception)
-        {
-            // Suppress noisy stack traces if we failed and destroyed the avatar root before the resize finished
-            if (textureComponent.IsDestroyed) return;
-            throw;
-        }
     }
 
     private async Task<f.IWorldElement?> CreateMesh(string name, p::mesh.Mesh mesh)
