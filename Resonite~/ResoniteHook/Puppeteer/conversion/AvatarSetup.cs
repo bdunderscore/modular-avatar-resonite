@@ -290,62 +290,71 @@ public partial class RootConverter
         var wrist = Object<f.Slot>(arm.Hand);
         var thumb = Object<f.Slot>(arm.Thumb.LastBone());
         var index = Object<f.Slot>(arm.Index.LastBone());
-        
-        if (wrist == null || thumb == null || index == null) return new HandCoordinates()
+
+        if (wrist == null)
         {
-            // We have no hand coordinates, so make a guess
-            up = float3.Up,
-            forward = float3.Forward
-        };
-        
-        var cross = Vector3.Cross(
-            index.GlobalPosition - wrist.GlobalPosition,
-            thumb.GlobalPosition - wrist.GlobalPosition
-        );
-        if (cross.Y < 0)
-        {
-            cross = -cross;
+            return new HandCoordinates()
+            {
+                // We have no hand, so just pick something and hope it works out :/
+                up = float3.Up,
+                forward = float3.Forward
+            };
         }
 
+        float3 forward;
+        Vector3? fingertipGlobalPosition = null;
+
+        // Use the arm-to-wrist vector as the forward direction.
+        var wristNextParentId = arm.LowerArm;
+        if (wristNextParentId == null || wristNextParentId.Id == 0)
+        {
+            wristNextParentId = arm.UpperArm;
+        }
+        if (wristNextParentId == null || wristNextParentId.Id == 0)
+        {
+            wristNextParentId = arm.Shoulder;
+        }
+
+        f.Slot parentSlot = (wristNextParentId != null && wristNextParentId.Id != 0)
+            ? _context.Object<f.Slot>(wristNextParentId)!
+            : wrist.Parent!;
+        
+        if (index != null)
+        {
+            // We use the wrist-to-index vector as the forward direction.
+            //forward = AxisAlignDirection(wrist, index.GlobalPosition - wrist.GlobalPosition);
+            forward = (index.GlobalPosition - wrist.GlobalPosition).Normalized;
+        }
+        else
+        {
+            forward = (wrist.GlobalPosition - parentSlot.GlobalPosition).Normalized;
+        }
+    
+        float3 globalUp = float3.Up;
+        
+        // Remove all contribution on the forward direction from up
+        globalUp -= Vector3.Dot(globalUp, forward) * forward;
+        globalUp = globalUp.Normalized;
+        
         return new HandCoordinates()
         {
-            up = AxisAlignDirection(wrist, cross),
-            forward = AxisAlignDirection(wrist, index.GlobalPosition - wrist.GlobalPosition)
+            up = globalUp,
+            forward = forward,
         };
-
-        float3 AxisAlignDirection(f.Slot slot, float3 direction)
-        {
-            direction = direction.Normalized;
-
-            float3 bestGlobalDirection = float3.Zero;
-            AlignAxis(ref bestGlobalDirection, float3.Up);
-            AlignAxis(ref bestGlobalDirection, float3.Right);
-            AlignAxis(ref bestGlobalDirection, float3.Forward);
-
-            return bestGlobalDirection;
-            
-            void AlignAxis(ref float3 bestGlobalDirection, float3 axis)
-            {
-                var bestDot = Vector3.Dot(bestGlobalDirection, direction);
-                
-                var globalDir = slot.LocalDirectionToGlobal(axis);
-                var currentDot = Vector3.Dot(globalDir, direction);
-
-                if (currentDot < 0)
-                {
-                    globalDir = -globalDir;
-                    currentDot = -currentDot;
-                }
-
-                if (currentDot > bestDot) bestGlobalDirection = globalDir;
-            }
-        }
     }
 
     private async Task InvokeAvatarBuilder(f.Slot slot, p.AvatarDescriptor spec)
     {
         var tmpSlot = slot.FindChild("CenteredRoot");
+        
+        var leftHandCoords = GetHandCoordinates(spec.Bones.LeftArm);
+        var rightHandCoords = GetHandCoordinates(spec.Bones.RightArm);
 
+        Console.WriteLine("Left hand up: " + leftHandCoords.up);
+        Console.WriteLine("Left hand forward: " + leftHandCoords.forward);
+        Console.WriteLine("Right hand up: " + rightHandCoords.up);
+        Console.WriteLine("Right hand forward: " + rightHandCoords.forward);
+        
         var avatarBuilderSlot = tmpSlot.AddSlot("Avatar Builder");
         var avatarCreator = avatarBuilderSlot.AttachComponent<f.AvatarCreator>();
         
@@ -397,9 +406,7 @@ public partial class RootConverter
         Console.WriteLine("Headset fwd vector: " + slot_headset.GlobalDirectionToLocal(Vector3.UnitZ));
         
         // Align hands. The resonite (right) hand model has the Z axis facing along the fingers, and Y up.
-        
-        var leftHandCoords = GetHandCoordinates(spec.Bones.LeftArm);
-        var rightHandCoords = GetHandCoordinates(spec.Bones.RightArm);
+
         
         var rightArm = bone_right_hand.Parent;
         var leftArm = bone_left_hand.Parent;

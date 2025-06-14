@@ -6,6 +6,12 @@ internal static class Helpers
 {
     internal static ObjectID? LastBone(this Finger f)
     {
-        return f.Tip ?? f.Distal ?? f.Intermediate ?? f.Proximal ?? f.Metacarpal;
+        if (f.Tip != null && f.Tip.Id != 0) return f.Tip;
+        if (f.Distal != null && f.Distal.Id != 0) return f.Distal;
+        if (f.Intermediate != null && f.Intermediate.Id != 0) return f.Intermediate;
+        if (f.Proximal != null && f.Proximal.Id != 0) return f.Proximal;
+        if (f.Metacarpal != null && f.Metacarpal.Id != 0) return f.Metacarpal;
+        
+        return null;
     }
 }
