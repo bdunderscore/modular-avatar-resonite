@@ -194,6 +194,7 @@ namespace nadena.dev.ndmf.platform.resonite
             
             protoMat.BlendMode = blendMode;
             protoMat.CullMode = cullMode;
+            protoMat.UnityRenderQueue = material.renderQueue;
 
             return true;
         }
