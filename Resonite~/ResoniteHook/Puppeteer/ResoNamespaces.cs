@@ -23,4 +23,6 @@ public class ResoNamespaces
     public const string AvatarWornLocal = ModularAvatarNamespacePrefix + "AvatarWornLocal";
 
     public const string AvatarPoseNodePrefix = ModularAvatarNamespacePrefix + "AvatarPoseNode.";
+    
+    public const string VRIKHeadMaxFixDistance = ModularAvatarNamespacePrefix + "VRIK.HeadMaxFixDistance";
 }
