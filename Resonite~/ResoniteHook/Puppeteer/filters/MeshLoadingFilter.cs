@@ -35,6 +35,7 @@ public class MeshLoadingFilter(TranslateContext context)
         foreach (var renderer in renderers)
         {
             if (renderer.EnumerateParents().Contains(gateRoot)) continue;
+            if (renderer.Mesh.Target == null) continue;
 
             var slot = renderer.Slot.AddSlot("Loaded check");
             var meshMetadata = slot.AttachComponent<MeshAssetMetadata>();
