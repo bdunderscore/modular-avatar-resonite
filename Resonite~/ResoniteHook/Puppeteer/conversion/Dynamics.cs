@@ -48,7 +48,7 @@ public partial class RootConverter
 
         float interval = collider.Height / colliderCount;
         float3 posOffset = collider.PositionOffset.Vec3();
-        posOffset -= collider.Height / 2f * float3.Up;
+        float3 heightOffset = -(collider.Height / 2f * float3.Up);
         
         Defer(PHASE_BUILD_COLLIDERS, async () =>
         {
@@ -69,7 +69,7 @@ public partial class RootConverter
                 else
                 {
                     host = sub.AddSlot("Capsule subcollider");
-                    host.LocalPosition = (interval * i) * float3.Up;
+                    host.LocalPosition = heightOffset + (interval * i) * float3.Up;
                 }
 
                 var fCollider = host.AttachComponent<f.DynamicBoneSphereCollider>();
