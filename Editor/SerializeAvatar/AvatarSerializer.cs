@@ -99,12 +99,20 @@ namespace nadena.dev.ndmf.platform.resonite
             if (protoAsset != null)
             {
                 _protoAssets[asset] = protoAsset;
+                
                 p.Asset wrapper = new()
                 {
                     Name = asset.name,
                     Id = id,
-                    Asset_ = Any.Pack(protoAsset)
+                    Asset_ = Any.Pack(protoAsset),
                 };
+
+                var base_asset = ObjectRegistry.GetReference(asset).Object;
+                if (AssetDatabase.Contains(base_asset))
+                {
+                    var guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(base_asset));
+                    wrapper.StableId = guid;
+                } 
 
                 _exportRoot.Assets.Add(wrapper);
             }

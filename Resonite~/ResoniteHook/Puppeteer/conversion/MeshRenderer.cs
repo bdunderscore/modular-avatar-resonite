@@ -14,8 +14,7 @@ public partial class RootConverter
             if (component.Mesh != null) mr.Mesh.Value = AssetRefID<f.IAssetProvider<f.Mesh>>(component.Mesh);
             foreach (var matId in component.Materials)
             {
-                var material = Asset<f.IAssetProvider<f.Material>>(matId);
-                mr.Materials.Add(material);
+                BindMaterial(matId, mr.Materials.Add());
             }
 
             return mr;
@@ -27,8 +26,7 @@ public partial class RootConverter
             if (component.Mesh != null) mr.Mesh.Value = AssetRefID<f.IAssetProvider<f.Mesh>>(component.Mesh);
             foreach (var matId in component.Materials)
             {
-                var material = Asset<f.IAssetProvider<f.Material>>(matId);
-                mr.Materials.Add(material);
+                BindMaterial(matId, mr.Materials.Add());
             }
 
             Defer(PHASE_RESOLVE_REFERENCES, () =>

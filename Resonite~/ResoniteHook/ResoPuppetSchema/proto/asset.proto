@@ -12,6 +12,9 @@ message Asset {
   AssetID id = 2;
   
   google.protobuf.Any asset = 3;
+  
+  // A stable, internal identifier for the asset (eg derived from unity GUID)
+  optional string stable_id = 4;
 }
 
 enum BlendMode {

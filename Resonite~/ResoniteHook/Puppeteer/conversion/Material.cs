@@ -1,5 +1,6 @@
 #nullable enable
 
+using System.Text.RegularExpressions;
 using FrooxEngine;
 using Google.Protobuf;
 
@@ -11,15 +12,56 @@ namespace nadena.dev.resonity.remote.puppeteer.rpc;
 
 public partial class RootConverter
 {
-    private f.IAssetProvider<f.Material> _baseMaterial;
+    private static Regex DeniedDynVarNameChars = new Regex(@"[^a-zA-Z0-9_\.]");
     
-    private async Task<f.IWorldElement?> CreateMaterial(string name, p::Material material)
+    private f.IAssetProvider<f.Material> _baseMaterial;
+    private HashSet<string> usedMaterialNames = new HashSet<string>();
+    
+    private string AssignMaterialName(p::Asset asset) {
+        var name = DeniedDynVarNameChars.Replace(asset.Name, "");
+        if (asset.HasStableId)
+        {
+            name += "_" + asset.StableId;
+        }
+
+        int suffix = 0;
+        string suffixedName = name;
+        while (usedMaterialNames.Contains(suffixedName))
+        {
+            suffix++;
+            suffixedName = $"{name}_{suffix}";
+        }
+        
+        usedMaterialNames.Add(suffixedName);
+        return suffixedName;
+    }
+
+    private void BindMaterial(p.AssetID id, AssetRef<f.Material> mat)
+    {
+        var sourceField = Asset<f.SyncRef<f.IAssetProvider<f.Material>>>(id);
+        if (sourceField == null) return;
+
+        mat.DriveFrom(sourceField);
+    }
+    
+    private async Task<f.IWorldElement?> CreateMaterial(p::Asset asset, p::Material material)
     {
         await new f::ToWorld();
         
         var holder = AssetSubslot("Materials", _assetRoot);
 
-        return await CreateXSToonMaterial(name, holder, material);
+        var matSlot = holder.AddSlot(asset.Name);
+
+        var mat = await CreateXSToonMaterial(asset.Name, matSlot.AddSlot("XSToonMaterial"), material);
+
+        var dynVar = matSlot.AttachComponent<f.DynamicReferenceVariableDriver<IAssetProvider<f.Material>>>();
+        var referenceField = matSlot.AttachComponent<f.ReferenceField<f.IAssetProvider<f.Material>>>();
+
+        dynVar.Target.Target = referenceField.Reference;
+        dynVar.VariableName.Value = ResoNamespaces.MaterialNamespace + AssignMaterialName(asset);
+        dynVar.DefaultTarget.Target = mat;
+        
+        return referenceField.Reference;
         
         // TODO: handle other material types
         var materialComponent = holder.AttachComponent<f::PBS_Metallic>();
@@ -34,15 +76,13 @@ public partial class RootConverter
 
     private f::XiexeToonMaterial? _xsExemplar;
     
-    private async Task<f.IWorldElement?> CreateXSToonMaterial(string name, f.Slot holder, p.Material src)
+    private async Task<f.IAssetProvider<Material>> CreateXSToonMaterial(string name, f.Slot holder, p.Material src)
     {
-        holder = AssetSubslot("XSToonMaterials", holder);
         if (_xsExemplar == null)
         {
-            _xsExemplar = CreateXSToonExemplar(holder);
+            _xsExemplar = CreateXSToonExemplar(AssetSubslot("Materials", _assetRoot));
         }
 
-        holder = holder.AddSlot(name);
         var mat = holder.AttachComponent<f.XiexeToonMaterial>();
 
         Defer(PHASE_RESOLVE_REFERENCES, () =>
@@ -175,7 +215,8 @@ public partial class RootConverter
 
     private f.XiexeToonMaterial CreateXSToonExemplar(f.Slot holder)
     {
-        var slot = holder.AddSlot("__SharedConfig");
+        var slot = holder.AddSlot("<color=cyan>MA</color> Shared Config");
+        slot.OrderOffset = -1;
         var xs = slot.AttachComponent<f.XiexeToonMaterial>();
 
         var shadowRampHolder = slot.AddSlot("ShadowRamp");

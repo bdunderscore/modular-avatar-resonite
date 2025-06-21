@@ -80,7 +80,7 @@ public partial class RootConverter : IDisposable
 
     private async Task _ConvertSync(p.ExportRoot exportRoot)
     {
-        _context.AssetRoot = _world.RootSlot.AddSlot("__Assets");
+        _context.AssetRoot = _world.RootSlot.AddSlot("Assets");
 
         await ConvertAssets(exportRoot.Assets);
 
@@ -113,6 +113,9 @@ public partial class RootConverter : IDisposable
         avatarRootVar.VariableName.Value = ResoNamespaces.AvatarRoot;
         avatarRootField.Reference.Target = _root;
         avatarRootVar.Reference.DriveFrom(avatarRootField.Reference);
+
+        // Move assets to the root
+        _assetRoot.SetParent(_root);
         
         SavedGraph savedGraph = _root.SaveObject(f.DependencyHandling.CollectAssets);
         Record record = RecordHelper.CreateForObject<Record>(_root.Name, "", null);
@@ -187,8 +190,9 @@ public partial class RootConverter : IDisposable
     }
 
     private Stopwatch _textureBuildTimer = new();
-    private async Task<f.IWorldElement?> CreateTexture(string name, p::Texture texture)
+    private async Task<f.IWorldElement?> CreateTexture(p::Asset asset, p::Texture texture)
     {
+        var name = asset.Name;
         var holder = AssetSubslot("Textures", _assetRoot).AddSlot(name);
 
         await new f::ToBackground();
@@ -258,8 +262,9 @@ public partial class RootConverter : IDisposable
         return textureComponent;
     }
 
-    private async Task<f.IWorldElement?> CreateMesh(string name, p::mesh.Mesh mesh)
+    private async Task<f.IWorldElement?> CreateMesh(p::Asset asset, p::mesh.Mesh mesh)
     {
+        var name = asset.Name;
         var holder = AssetSubslot("Meshes", _assetRoot).AddSlot(name);
 
         await new f::ToBackground();

@@ -29,8 +29,8 @@ public partial class RootConverter
 
     private Dictionary<string, AssetBuilder> AssetTypes = new();
     
-    private delegate Task<f.IWorldElement?> AssetBuilder(string name, p::Asset asset);
-    private delegate Task<f.IWorldElement?> TypedAssetBuilder<M>(string name, M asset) where M : IMessage, new();
+    private delegate Task<f.IWorldElement?> AssetBuilder(p::Asset name, p::Asset asset);
+    private delegate Task<f.IWorldElement?> TypedAssetBuilder<M>(p::Asset outerAsset, M asset) where M : IMessage, new();
 
     private void RegisterComponentType<M>(TypedComponentBuilder<M> builder)
         where M : IMessage, new()
@@ -133,7 +133,7 @@ public partial class RootConverter
             return;
         }
         
-        var fAsset = await assetBuilder(asset.Name, asset);
+        var fAsset = await assetBuilder(asset, asset);
         await new f::ToWorld();
         if (fAsset != null) _assets[asset.Id] = fAsset;
     }
