@@ -12,6 +12,12 @@ import "google/protobuf/any.proto";
 message ExportRoot {
   repeated Asset assets = 1;
   GameObject root = 2;
+  repeated VersionInfo versions = 3;
+}
+
+message VersionInfo {
+  string package_name = 1;
+  string version = 2;
 }
 
 message GameObject {

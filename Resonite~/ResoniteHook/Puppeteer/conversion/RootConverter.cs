@@ -101,6 +101,8 @@ public partial class RootConverter : IDisposable
 
         await RunDeferred();
 
+        EmbedVersionInfo(exportRoot);
+
         //_root.AttachComponent<f.DestroyRoot>();
         _root.AttachComponent<SimpleAvatarProtection>();
         _root.AttachComponent<f.ObjectRoot>();
@@ -133,6 +135,21 @@ public partial class RootConverter : IDisposable
             // ReSharper disable once MethodHasAsyncOverload
             var bytes = ByteString.CopyFrom(stream.GetBuffer(), 0, (int)stream.Length);
             _context.StatusStream.SendCompletedAvatar(bytes);
+        }
+    }
+
+    private void EmbedVersionInfo(p.ExportRoot exportRoot)
+    {
+        if (exportRoot.Versions.Count == 0) return;
+        
+        var versionInfo = _root.AddSlot("<color=cyan>Modular Avatar</color> - Version Info");
+        versionInfo.OrderOffset = 100;
+
+        foreach (var vi in exportRoot.Versions)
+        {
+            var dynVar = versionInfo.AttachComponent<DynamicValueVariable<string>>();
+            dynVar.VariableName.Value = ResoNamespaces.VersionNamespace + vi.PackageName;
+            dynVar.Value.Value = vi.Version;
         }
     }
 

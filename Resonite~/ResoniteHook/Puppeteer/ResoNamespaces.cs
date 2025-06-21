@@ -4,7 +4,8 @@ public class ResoNamespaces
 {
     public const string ModularAvatarNamespace = "modular_avatar";
     public const string ModularAvatarNamespacePrefix = ModularAvatarNamespace + "/";
-
+    public const string VersionNamespace = ModularAvatarNamespacePrefix + "Version.";
+    
     public const string AvatarRoot = ModularAvatarNamespacePrefix + "AvatarRoot";
     public const string SettingsRoot = ModularAvatarNamespacePrefix + "AvatarSettingsRoot";
     

@@ -90,7 +90,7 @@ namespace nadena.dev.ndmf.platform.resonite
             _buildStateLabel.text = BuildController.Instance.State;
         }
 
-        private void BuildAvatar()
+        private async void BuildAvatar()
         {
             // Start the server in the background
             using var client = RPCClientController.ClientHandle();
@@ -104,17 +104,11 @@ namespace nadena.dev.ndmf.platform.resonite
 
                 var buildContext = AvatarProcessor.ProcessAvatar(clone, ResonitePlatform.Instance);
 
-                var root = new AvatarSerializer().Export(clone, buildContext.GetState<ResoniteBuildState>().cai);
-                var task = BuildController.Instance.BuildAvatar(client, root);
-
-                task.ContinueWith(_ =>
-                {
-                    NDMFSyncContext.RunOnMainThread(_ =>
-                    {
-                        _buildStateContainer.style.display = DisplayStyle.Flex;
-                        UpdateDisplayState();
-                    }, null);
-                });
+                var root = await new AvatarSerializer().Export(clone, buildContext.GetState<ResoniteBuildState>().cai);
+                await BuildController.Instance.BuildAvatar(client, root);
+                
+                _buildStateContainer.style.display = DisplayStyle.Flex;
+                UpdateDisplayState();
             }
             finally
             {

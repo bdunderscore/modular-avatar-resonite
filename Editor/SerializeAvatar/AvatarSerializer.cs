@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using nadena.dev.modular_avatar.core;
@@ -14,7 +15,9 @@ using nadena.dev.ndmf.proto.rpc;
 using ResoPuppetSchema;
 using UnityEditor;
 using UnityEditor.Graphs;
+using UnityEditor.PackageManager.UI;
 using UnityEngine;
+using PackageManager = UnityEditor.PackageManager;
 using UnityEngine.UI;
 using VRC.SDK3.Avatars.Components;
 using BoneWeight = nadena.dev.ndmf.proto.mesh.BoneWeight;
@@ -123,7 +126,7 @@ namespace nadena.dev.ndmf.platform.resonite
             return id;
         }
 
-        internal p.ExportRoot Export(GameObject go, CommonAvatarInfo info)
+        internal async Task<p.ExportRoot> Export(GameObject go, CommonAvatarInfo info)
         {
             try
             {
@@ -151,6 +154,8 @@ namespace nadena.dev.ndmf.platform.resonite
                     });
                 }
 
+				await EmbedVersions();
+
                 return _exportRoot;
             }
             finally
@@ -163,6 +168,44 @@ namespace nadena.dev.ndmf.platform.resonite
                 foreach (var translator in _shaderTranslators)
                 {
                     translator.Dispose();
+                }
+            }
+        }
+
+        private static string[] PackagesToEmbed = new[]
+        {
+            "nadena.dev.modular-avatar",
+            "nadena.dev.ndmf",
+            "nadena.dev.modular-avatar-resonite"
+        };
+
+        private async Task EmbedVersions()
+        {
+            var request = PackageManager.Client.List(true);
+
+            while (!request.IsCompleted)
+            {
+                await Task.Delay(10);
+            }
+
+            var pkgList = request.Result;
+            var packages = pkgList.ToDictionary(p => p.name, p => p);
+            
+            foreach (var pkg in PackagesToEmbed)
+            {
+                if (packages.TryGetValue(pkg, out var info))
+                {
+                    var version = info.version;
+                    if (File.Exists(Path.Combine(info.assetPath, ".git", "HEAD")))
+                    {
+                        version += "+git";
+                    }
+                    
+                    _exportRoot.Versions.Add(new p.VersionInfo()
+                    {
+                        PackageName = pkg,
+                        Version = version
+                    });
                 }
             }
         }
