@@ -89,19 +89,22 @@ public partial class RootConverter
 
         Defer(PHASE_RESOLVE_REFERENCES, async () =>
         {
-            var root = Object<f.Slot>(bone.RootTransform) ?? throw new Exception("Dynamic bone root not found");
-
-            var ignored = bone.IgnoreTransforms.Select(Object<f.Slot>)
-                .Where(t => t != null)
-                .Select(t => t!)
-                .ToHashSet();
-            ignored.Add(boneChild);
-        
             var db = boneChild.AttachComponent<f.DynamicBoneChain>();
 
-            db.SetupFromChildren(root, false, slot => !ignored.Contains(slot));
+            var base_radius = bone.Bones.Select(b => b.Radius).Max();
+            
+            foreach ((var slot, var radius) in bone.Bones
+                         .Select(b => (Object<f.Slot>(b.Bone), b.Radius))
+                         .Where(b => b.Item1 != null)
+                         .OrderBy(kv => BonePath(kv.Item1))
+                    )
+            {
+                var entry = db.Bones.Add();
+                entry.Assign(slot!);
+                entry.RadiusModifier.Value = radius / base_radius;
+            }
 
-            db.BaseBoneRadius.Value = bone.BaseRadius;
+            db.BaseBoneRadius.Value = base_radius;
             db.IsGrabbable.Value = bone.IsGrabbable;
             db.StaticColliders.AddRange(
                 bone.Colliders.SelectMany(
@@ -114,6 +117,19 @@ public partial class RootConverter
         });
         
         return null;
+
+        string BonePath(f.Slot? bone)
+        {
+            if (bone == null) return "";
+
+            string path = "";
+            foreach (var slot in bone.EnumerateParents())
+            {
+                path = $"{slot.ReferenceID}{path}";
+            }
+
+            return path;
+        }
     }
 
     private void GenerateTemplateControls(f.DynamicBoneChain db, string templateName)

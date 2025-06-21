@@ -22,11 +22,15 @@ message DynamicCollider {
 }
 
 message DynamicBone {
-  ObjectID root_transform = 1;
   string template_name = 2;
-  float base_radius = 3;
-  repeated ObjectID ignore_transforms = 4;
   bool is_grabbable = 5;
   //.bool ignore_self = 6;
   repeated ObjectID colliders = 7;
+  
+  repeated DynamicBoneNode bones = 8;
+}
+
+message DynamicBoneNode {
+  ObjectID bone = 1;
+  float radius = 2;
 }

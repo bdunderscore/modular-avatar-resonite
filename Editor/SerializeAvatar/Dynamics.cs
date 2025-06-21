@@ -28,11 +28,28 @@ namespace nadena.dev.ndmf.platform.resonite
 
             var root = pdb.Root ? pdb.Root!.gameObject : pdb.gameObject;
 
-            msg.RootTransform = MapObject(root);
+            var bones = CollectBones(pdb, root.transform, new HashSet<Transform>(pdb.IgnoreTransforms.Value ?? new List<Transform>()));
+            if (bones.Count == 0)
+            {
+                Debug.LogWarning($"PortableDynamicBone {pdb.name} has no bones to serialize. Skipping.");
+                return null;
+            }
+            var maxDepth = bones.Max(b => b.Item2);
+
+            foreach ((var bone, var depth) in bones)
+            {
+                var boneNode = new p.DynamicBoneNode();
+                boneNode.Bone = MapObject(bone);
+                boneNode.Radius = pdb.BaseRadius.Value;
+                if (pdb.RadiusCurve.Value != null)
+                {
+                    var t = (float)depth / (float)maxDepth;
+                    boneNode.Radius *= pdb.RadiusCurve.Value.Evaluate(t);
+                }
+                msg.Bones.Add(boneNode);
+            }
+            
             msg.TemplateName = pdb.TemplateName;
-            msg.BaseRadius = pdb.BaseRadius;
-            msg.IgnoreTransforms.AddRange(pdb.IgnoreTransforms.Value.Where(t => t != null)
-                .Select(MapObject));
             msg.IsGrabbable = pdb.IsGrabbable;
             //msg.IgnoreSelf = pdb.IgnoreSelf;
             msg.Colliders.AddRange(pdb.Colliders.Value
@@ -40,6 +57,38 @@ namespace nadena.dev.ndmf.platform.resonite
                 .Select(MapObject));
 
             return msg;
+        }
+
+        private List<(Transform, int)> CollectBones(PortableDynamicBone pdb, Transform root, HashSet<Transform> ignores)
+        {
+            List<(Transform, int)> bones = new();
+
+            Traverse(root, 0);
+
+            return bones;
+            
+            void Traverse(Transform t, int depth)
+            {
+                if (ignores.Contains(t))
+                    return;
+
+                int childCount = 0;
+                foreach (Transform child in t)
+                {
+                    if (ignores.Contains(child)) continue;
+                    childCount++;
+                }
+                
+                if (childCount <= 1 || !pdb.IgnoreMultiChild.Value)
+                {
+                    bones.Add((t, depth));
+                }
+                
+                foreach (Transform child in t)
+                {
+                    Traverse(child, depth + 1);
+                }
+            }
         }
 
         private IMessage? TranslateDynamicCollider(PortableDynamicBoneCollider boneCollider)
