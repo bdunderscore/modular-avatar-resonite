@@ -125,7 +125,7 @@ public partial class RootConverter
             string path = "";
             foreach (var slot in bone.EnumerateParents())
             {
-                path = $"{slot.ReferenceID}{path}";
+                path = $"{slot.ReferenceID}/{path}";
             }
 
             return path;
