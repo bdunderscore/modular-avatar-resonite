@@ -1,4 +1,4 @@
-﻿using nadena.dev.ndmf.preview;
+﻿using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -90,7 +90,7 @@ namespace nadena.dev.ndmf.platform.resonite
             _buildStateLabel.text = BuildController.Instance.State;
         }
 
-        private async void BuildAvatar()
+        private async Task BuildAvatar()
         {
             // Start the server in the background
             using var client = RPCClientController.ClientHandle();
