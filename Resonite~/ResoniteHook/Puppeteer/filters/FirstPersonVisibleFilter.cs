@@ -115,7 +115,7 @@ internal partial class FirstPersonVisibleFilter(TranslateContext ctx)
                 bone == null || (IsVisibleInFirstPerson.TryGetValue(bone, out var visible) && visible)
             ).ToList();
 
-        var results = await ProcessFPVMesh((F.StaticMesh)smr.Mesh.Target, boneToVisible);
+        var results = await ProcessFPVMesh((F.StaticMesh)smr.Mesh.Target, boneToVisible, smr.Materials.Count);
 
         int firstNewIndex = smr.Materials.Count;
         foreach (var oldIndex in results.CloneToOriginalIndex)

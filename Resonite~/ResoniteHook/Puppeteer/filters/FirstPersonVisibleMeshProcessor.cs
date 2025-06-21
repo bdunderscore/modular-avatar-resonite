@@ -46,7 +46,7 @@ internal partial class FirstPersonVisibleFilter
         }
     }
     
-    private async Task<MeshProcessingResults> ProcessFPVMesh(F.StaticMesh mesh, List<bool> boneToVisible)
+    private async Task<MeshProcessingResults> ProcessFPVMesh(F.StaticMesh mesh, List<bool> boneToVisible, int minSubmeshes)
     {
         var meshName = mesh.Slot.Name;
         
@@ -113,6 +113,17 @@ internal partial class FirstPersonVisibleFilter
         }
 
         CheckMeshBoneIndices(meshx);
+        
+        
+        while (meshx.SubmeshCount < minSubmeshes)
+        {
+            // Unity duplicates the last submesh if we try to add more than the original count. Since we'll be adding
+            // new submeshes below, though, we need to make sure we don't rely on this hack. As such, we'll duplicate
+            // the last submesh to fill the gap.
+            var lastSubmesh = meshx.GetSubmesh(meshx.SubmeshCount - 1);
+            var newSubmesh = meshx.AddSubmesh(lastSubmesh.Topology);
+            newSubmesh.Append(lastSubmesh);
+        }
         
         int originalSubmeshCount = meshx.SubmeshCount;
         for (int submeshIndex = 0; submeshIndex < originalSubmeshCount; submeshIndex++)
