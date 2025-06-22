@@ -200,55 +200,11 @@ public partial class RootConverter
 
         void StringConcatNode(Slot internalsNode, IField<string> templateName, string fieldName, IField<string> target)
         {
-            var concat = CreateProtofluxNode<ConcatenateMultiString>(internalsNode);
-            var prefixNode = CreateProtofluxNode<ValueObjectInput<string>>(internalsNode);
-            var fieldSource = CreateProtofluxSource<string>(internalsNode);
-            var suffixNode = CreateProtofluxNode<ValueObjectInput<string>>(internalsNode);
-
-            prefixNode.Value.Value = prefix;
-            suffixNode.Value.Value = intron + fieldName;
-            
-            fieldSource.TrySetRootSource(templateName);
-
-            concat.Inputs.Add(prefixNode);
-            concat.Inputs.Add((INodeObjectOutput<string>) fieldSource);
-            concat.Inputs.Add(suffixNode);
-            
-            var driver = CreateProtofluxNode<FrooxEngine.FrooxEngine.ProtoFlux.CoreNodes.ObjectFieldDrive<string>>(internalsNode);
-            driver.TrySetRootTarget(target);
-            driver.Value.Target = concat;
-        }
-
-        ISource CreateProtofluxSource<T>(Slot parent)
-        {
-            var ty = ProtoFluxHelper.GetSourceNode(typeof(T));
-            var node = parent.AddSlot(ty.Name);
-            node.LocalPosition = -parent.LocalPosition;
-            parent.LocalPosition += float3.Up * 0.1f;
-            var component = node.AttachComponent(ty);
-
-            return (ISource)component;
-        }
-
-        ProtoFluxNode CreateProtofluxNodeGeneric(Slot parent, Type t)
-        {
-            var node = parent.AddSlot(t.Name);
-            node.LocalPosition = -parent.LocalPosition;
-            parent.LocalPosition += float3.Up * 0.1f;
-            var component = node.AttachComponent(t);
-
-            return (ProtoFluxNode)component;
-        }
-        
-        T CreateProtofluxNode<T>(Slot parent) where T : ProtoFluxNode, new()
-        {
-            var node = parent.AddSlot(typeof(T).Name);
-            node.LocalPosition = -parent.LocalPosition;
-            parent.LocalPosition += float3.Up * 0.1f;
-            
-            var component = node.AttachComponent<T>();
-
-            return (T)component;
+            var driver = internalsNode.AttachComponent<f.StringConcatenationDriver>();
+            driver.TargetString.Target = target;
+            driver.Strings.Add().Value = prefix;
+            driver.Strings.Add().DriveFrom(templateName);
+            driver.Strings.Add().Value = intron + fieldName;
         }
     }
 }
