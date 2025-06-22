@@ -17,6 +17,7 @@ public class ResoNamespaces
     public const string FaceMeshRenderer = ModularAvatarNamespacePrefix + "FaceMeshRenderer";
     public const string FaceMesh = ModularAvatarNamespacePrefix + "FaceMesh";
     public const string DynBoneTemplates = ModularAvatarNamespacePrefix + "dynamic_bone_template.";
+    public const string DynBoneActivator = ModularAvatarNamespacePrefix + "dynamic_bone_activator.";
     public const string XSToonTemplate = ModularAvatarNamespacePrefix + "xs_toon_template.";
 
     public const string LoadingGate_NotLoaded = ModularAvatarNamespacePrefix + "MeshNotLoaded";

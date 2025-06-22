@@ -24,6 +24,7 @@ using pm = nadena.dev.ndmf.proto.mesh;
 
 public partial class RootConverter
 {
+    public const string DynBoneControllerTag = "modular_avatar/dynamic_bone_controller";
     private f.Slot? _dynamicBoneTemplateRoot = null;
     private HashSet<string> _generatedDynamicBoneTemplates = new();
     private Dictionary<p.ObjectID, List<f.DynamicBoneSphereCollider>> _colliderMap = new();
@@ -86,6 +87,7 @@ public partial class RootConverter
     private async Task<f.IComponent?> ProcessDynamicBone(f.Slot parent, p.DynamicBone bone, p.ObjectID _)
     {
         var boneChild = parent.AddSlot("Dynamic Bone");
+        boneChild.Tag = DynBoneControllerTag;
         var db = boneChild.AttachComponent<f.DynamicBoneChain>();
 
         Defer(PHASE_RESOLVE_REFERENCES, async () =>
