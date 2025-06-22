@@ -23,8 +23,8 @@ public class MeshLoadingFilter(TranslateContext context)
     
     public async Task Apply()
     {
-        var centeredRoot = _avatarRoot.FindChild("CenteredRoot");
-        var assets = centeredRoot?.FindChild("__Assets");
+        var centeredRoot = context.Root!.FindChild("CenteredRoot");
+        var assets = context.AssetRoot;
         if (assets == null) return;
 
         var settingsRoot = context.SettingsNode!;
