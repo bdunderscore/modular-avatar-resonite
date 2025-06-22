@@ -49,7 +49,8 @@ namespace nadena.dev.ndmf.platform.resonite
                 msg.Bones.Add(boneNode);
             }
             
-            msg.TemplateName = pdb.TemplateName;
+            if (pdb.TemplateName.Override) msg.TemplateName = pdb.TemplateName.Value;
+            msg.RootTransform = MapObject(root);
             msg.IsGrabbable = pdb.IsGrabbable;
             //msg.IgnoreSelf = pdb.IgnoreSelf;
             msg.Colliders.AddRange(pdb.Colliders.Value

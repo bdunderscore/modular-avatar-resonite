@@ -114,7 +114,12 @@ public partial class RootConverter
                 )
             );
         
-            GenerateTemplateControls(db, bone.TemplateName);
+            var rootSlot = Object<f.Slot>(bone.RootTransform) ?? parent;
+            var templateName = bone.HasTemplateName && !string.IsNullOrWhiteSpace(bone.TemplateName) 
+                ? bone.TemplateName 
+                : GuessTemplateName(rootSlot, parent);
+            
+            GenerateTemplateControls(db, templateName);
         });
         
         return db;
@@ -161,6 +166,8 @@ public partial class RootConverter
             _generatedDynamicBoneTemplates.Add(templateName);
 
             templateBindings = templateRoot.AddSlot("(Internal) Bindings");
+
+            SetTemplateDefaultConfig(templateChain, templateName);
         }
 
         var templateNameNode = db.Slot.AddSlot("Template Name");
@@ -169,22 +176,38 @@ public partial class RootConverter
         
         var bindingInternalsNode = db.Slot.AddSlot("Bindings");
 
-        BindField(db.Inertia);
-        BindField(db.InertiaForce);
-        BindField(db.Damping);
-        BindField(db.Elasticity);
-        BindField(db.Stiffness);
+        BindField(chain => chain.Inertia);
+        BindField(chain => chain.InertiaForce);
+        BindField(chain => chain.Damping);
+        BindField(chain => chain.Elasticity);
+        BindField(chain => chain.Stiffness);
+        BindField(chain => chain.SimulateTerminalBones);
+        BindField(chain => chain.DynamicPlayerCollision);
+        BindField(chain => chain.CollideWithOwnBody);
+        BindField(chain => chain.HandCollisionVibration);
+        BindField(chain => chain.CollideWithHead);
+        BindField(chain => chain.CollideWithBody);
+        BindField(chain => chain.Gravity);
+        BindField(chain => chain.GravitySpace.UseParentSpace);
+        BindField(chain => chain.GravitySpace.Default);
+        BindField(chain => chain.UseUserGravityDirection);
+        BindField(chain => chain.LocalForce);
+        BindField(chain => chain.GrabSlipping);
+        BindField(chain => chain.GrabRadiusTolerance);
+        BindField(chain => chain.GrabTerminalBones);
+        BindField(chain => chain.GrabVibration);
 
 
-        void BindField<T>(f.Sync<T> field)
+        void BindField<T>(Func<f.DynamicBoneChain, f.Sync<T>> getField)
         {
+            var field = getField(db);
             if (templateRoot != null)
             {
                 var templateFieldBinding = templateRoot.AttachComponent<f.DynamicField<T>>();
                 //variable.VariableName.Value = variableName;
                 StringConcatNode(templateBindings!, templateRoot.NameField, field.Name, templateFieldBinding.VariableName);
 
-                var templateField = templateChain!.TryGetField<T>(field.Name) ?? throw new Exception("Field not found");
+                var templateField = getField(templateChain!) ?? throw new Exception("Field not found");
                 templateFieldBinding.OverrideOnLink.Value = true;
                 templateFieldBinding.TargetField.Value = templateField.ReferenceID;
             }
@@ -206,5 +229,109 @@ public partial class RootConverter
             driver.Strings.Add().DriveFrom(templateName);
             driver.Strings.Add().Value = intron + fieldName;
         }
+
+    }
+
+    private void SetTemplateDefaultConfig(DynamicBoneChain db, string templateName)
+    {
+        switch (templateName)
+        {
+            case "skirt":
+            {
+                // Skirts tend to have issues with clipping due to the lack of angle constraints, set a default
+                // config that doesn't move too much.
+                db.Inertia.Value = 0.8f;
+                db.InertiaForce.Value = 2.0f;
+                db.Damping.Value = 50f;
+                db.Elasticity.Value = 600f;
+                db.Stiffness.Value = 0.75f;
+                break;
+            }
+            case "breast":
+            {
+                db.Inertia.Value = 0.9f;
+                db.InertiaForce.Value = 2.0f;
+                db.Damping.Value = 10f;
+                db.Elasticity.Value = 100f;
+                db.Stiffness.Value = 0.67f;
+                break;
+            }
+            case "hair":
+            case "long_hair":
+            {
+                db.Inertia.Value = 0.34f;
+                db.InertiaForce.Value = 2.0f;
+                db.Damping.Value = 16.2f;
+                db.Elasticity.Value = 100f;
+                db.Stiffness.Value = 0.2f;
+                break;
+            }
+            case "ear":
+            {
+                db.Inertia.Value = 0.5f;
+                db.InertiaForce.Value = 2.0f;
+                db.Damping.Value = 12.43f;
+                db.Elasticity.Value = 100f;
+                db.Stiffness.Value = 0.2f;
+                break;
+            }
+            case "tail":
+            {
+                db.Inertia.Value = 0.2f;
+                db.InertiaForce.Value = 2.0f;
+                db.Damping.Value = 5f;
+                db.Elasticity.Value = 100f;
+                db.Stiffness.Value = 0.2f;
+                break;
+            }
+            default:
+                // use resonite built-in defaults
+                break;
+        }
+    }
+
+    private static string GuessTemplateName(f.Slot pbRootSlot, f.Slot pbContainerSlot)
+    {
+        return GuessTemplateNameFromSlot(pbRootSlot)
+               ?? GuessTemplateNameFromSlot(pbContainerSlot)
+               ?? "generic";
+    }
+
+    private static string? GuessTemplateNameFromSlot(Slot pbRootSlot)
+    {
+        var segments = pbRootSlot.EnumerateParents().Reverse().Append(pbRootSlot)
+            .Select(s => s.Name)
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            .Where(s => s != null)
+            .ToList();
+            
+        foreach (var segment in segments)
+        {
+            var template = TemplateFromObjectName(segment);
+            if (template != null)
+            {
+                return template;
+            }
+        }
+
+        return null;
+    }
+    
+    private static string? TemplateFromObjectName(string path)
+    {
+        path = path.ToLowerInvariant();
+        if (path.Contains("pony") || path.Contains("twin")) return "long_hair";
+            
+        if (path.Contains("hair"))
+        {
+            return "hair";
+        }
+
+        if (path.Contains("tail")) return "tail";
+        if (path.Contains("ear") || path.Contains("kemono") || path.Contains("mimi")) return "ear";
+        if (path.Contains("breast")) return "breast";
+        if (path.Contains("skirt")) return "skirt";
+
+        return null;
     }
 }

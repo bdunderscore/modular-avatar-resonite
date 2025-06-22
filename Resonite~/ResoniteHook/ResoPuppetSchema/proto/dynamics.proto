@@ -22,7 +22,8 @@ message DynamicCollider {
 }
 
 message DynamicBone {
-  string template_name = 2;
+  optional string template_name = 2;
+  optional ObjectID root_transform = 3;
   bool is_grabbable = 5;
   //.bool ignore_self = 6;
   repeated ObjectID colliders = 7;
