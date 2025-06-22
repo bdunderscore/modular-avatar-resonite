@@ -86,11 +86,10 @@ public partial class RootConverter
     private async Task<f.IComponent?> ProcessDynamicBone(f.Slot parent, p.DynamicBone bone, p.ObjectID _)
     {
         var boneChild = parent.AddSlot("Dynamic Bone");
+        var db = boneChild.AttachComponent<f.DynamicBoneChain>();
 
         Defer(PHASE_RESOLVE_REFERENCES, async () =>
         {
-            var db = boneChild.AttachComponent<f.DynamicBoneChain>();
-
             var base_radius = bone.Bones.Select(b => b.Radius).Max();
             
             foreach ((var slot, var radius) in bone.Bones
@@ -116,7 +115,7 @@ public partial class RootConverter
             GenerateTemplateControls(db, bone.TemplateName);
         });
         
-        return null;
+        return db;
 
         string BonePath(f.Slot? bone)
         {
