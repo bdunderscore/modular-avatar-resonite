@@ -93,6 +93,11 @@ namespace nadena.dev.ndmf.platform.resonite
 
         private IMessage? TranslateDynamicCollider(PortableDynamicBoneCollider boneCollider)
         {
+            if (boneCollider.InsideBounds)
+            {
+                return null; // unsupported
+            }
+            
             var msg = new p.DynamicCollider();
             
             var root = boneCollider.Root != null ? boneCollider.Root.gameObject : boneCollider.gameObject;
