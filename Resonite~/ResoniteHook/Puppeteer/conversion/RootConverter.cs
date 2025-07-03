@@ -118,6 +118,9 @@ public partial class RootConverter : IDisposable
 
         // Move assets to the root
         _assetRoot.SetParent(_root);
+
+        // The above move is sometimes not reflected in the saved record unless we wait a frame.
+        await new f.NextUpdate();
         
         SavedGraph savedGraph = _root.SaveObject(f.DependencyHandling.CollectAssets);
         Record record = RecordHelper.CreateForObject<Record>(_root.Name, "", null);
