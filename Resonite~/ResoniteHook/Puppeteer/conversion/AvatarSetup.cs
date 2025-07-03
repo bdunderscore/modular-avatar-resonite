@@ -321,7 +321,7 @@ public partial class RootConverter
             ? _context.Object<f.Slot>(wristNextParentId)!
             : wrist.Parent!;
         
-        if (index != null)
+        if (false && index != null)
         {
             // We use the wrist-to-index vector as the forward direction.
             //forward = AxisAlignDirection(wrist, index.GlobalPosition - wrist.GlobalPosition);
