@@ -30,8 +30,10 @@ public class MeshLoadingFilter(TranslateContext context)
         var settingsRoot = context.SettingsNode!;
         var gateRoot = settingsRoot.AddSlot("Avatar Loading Display");
         var spinnerTask = SpawnLoadingSpinner(gateRoot);
-        
-        var renderers = _avatarRoot.GetComponentsInChildren<MeshRenderer>();
+
+        var renderers = _avatarRoot.FindChild("CenteredRoot")
+                            ?.GetComponentsInChildren<MeshRenderer>()
+                        ?? new List<MeshRenderer>();
         foreach (var renderer in renderers)
         {
             if (renderer.EnumerateParents().Contains(gateRoot)) continue;
