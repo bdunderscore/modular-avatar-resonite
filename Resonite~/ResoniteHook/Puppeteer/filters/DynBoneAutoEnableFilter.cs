@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Elements.Assets;
 using FrooxEngine;
 using FrooxEngine.ProtoFlux;
 using FrooxEngine.ProtoFlux.Runtimes.Execution.Nodes;
@@ -73,7 +74,7 @@ public class DynBoneAutoEnableFilter(TranslateContext context)
         if (!mesh.IsAssetAvailable) return;
 
         HashSet<int> usedBoneIndices = new HashSet<int>();
-        foreach (var binding in mesh.Asset.Data.RawBoneBindings)
+        foreach (var binding in mesh.Asset?.Data?.RawBoneBindings ?? [])
         {
             for (int i = 0; i < 4; i++)
             {
