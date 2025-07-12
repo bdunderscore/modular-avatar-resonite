@@ -80,7 +80,9 @@ public partial class RootConverter : IDisposable
 
     private async Task _ConvertSync(p.ExportRoot exportRoot)
     {
-        _context.AssetRoot = _world.RootSlot.AddSlot("Assets");
+        // Try to workaround missing assets issue - maybe a slot named "Assets" under the root is treated specially?
+        var tempSlot = _world.RootSlot.AddSlot("TempSlot");
+        _context.AssetRoot = tempSlot.AddSlot("Assets");
 
         await ConvertAssets(exportRoot.Assets);
 
@@ -92,8 +94,8 @@ public partial class RootConverter : IDisposable
         _context.BuildComponentIndex(exportRoot.Root);
         _context.Root = await ConvertGameObject(exportRoot.Root, _world.RootSlot);
 
-        _assetRoot.SetParent(_root);
-        _context.SettingsNode.SetParent(_root);
+        _assetRoot.SetParent(_context.Root);
+        _context.SettingsNode.SetParent(_context.Root);
         
         // Reset root transform
         _root.Position_Field.Value = new float3();
@@ -116,10 +118,14 @@ public partial class RootConverter : IDisposable
         avatarRootField.Reference.Target = _root;
         avatarRootVar.Reference.DriveFrom(avatarRootField.Reference);
 
-        // Move assets to the root
+        // Move assets to the root (again)
         _assetRoot.SetParent(_root);
 
         // The above move is sometimes not reflected in the saved record unless we wait a frame.
+        // Or two.
+        // Hopefully this is enough???
+        await new f.NextUpdate();
+        _assetRoot.SetParent(_root);
         await new f.NextUpdate();
         
         SavedGraph savedGraph = _root.SaveObject(f.DependencyHandling.CollectAssets);
