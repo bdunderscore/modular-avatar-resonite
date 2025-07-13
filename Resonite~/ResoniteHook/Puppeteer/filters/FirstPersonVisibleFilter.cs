@@ -1,15 +1,11 @@
-﻿using System.Diagnostics;
-using Elements.Core;
+﻿using Elements.Core;
 using FrooxEngine;
-using nadena.dev.resonity.remote.puppeteer.logging;
 using nadena.dev.resonity.remote.puppeteer.rpc;
 
 namespace nadena.dev.resonity.remote.puppeteer.filters;
 
 using F = FrooxEngine;
-using PR = Google.Protobuf.Reflection;
 using P = nadena.dev.ndmf.proto;
-using PM = nadena.dev.ndmf.proto.mesh;
 
 internal partial class FirstPersonVisibleFilter(TranslateContext ctx)
 {
@@ -45,10 +41,12 @@ internal partial class FirstPersonVisibleFilter(TranslateContext ctx)
         if (invisibleMaterial != null) return invisibleMaterial;
         
         var slot = ctx.AssetRoot!.AddSlot("Invisible Material");
-        var mat = slot.AttachComponent<F.OverlayUnlitMaterial>();
-        mat.BlendMode.Value = F.BlendMode.Cutout;
-        mat.AlphaCutoff.Value = 1;
-        mat.TintColor = colorX.Clear;
+        
+        // PBS_RimSpecular is selected as it casts a shadow but otherwise is completely invisible.
+        var mat = slot.AttachComponent<F.PBS_RimSpecular>();
+        mat.AlbedoColor.Value = new colorX(0, 0, 0, 0);
+        mat.RimColor.Value = new colorX(0, 0, 0, 0);
+        mat.Transparent.Value = true;
 
         return invisibleMaterial = mat;
     }
