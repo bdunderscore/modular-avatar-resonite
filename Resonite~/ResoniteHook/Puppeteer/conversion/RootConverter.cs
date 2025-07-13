@@ -80,9 +80,12 @@ public partial class RootConverter : IDisposable
 
     private async Task _ConvertSync(p.ExportRoot exportRoot)
     {
+        // FrooxEngine will attempt to create an Assets slot only if one with that name does not already exist.
+        // If it does, the assets slot becomes protected and cannot be reparented. To avoid this, we apply some color codes
+        // to the Assets slot name, so it won't be treated as the default Assets slot.
+        
         // Try to workaround missing assets issue - maybe a slot named "Assets" under the root is treated specially?
-        var tempSlot = _world.RootSlot.AddSlot("TempSlot");
-        _context.AssetRoot = tempSlot.AddSlot("Assets");
+        _context.AssetRoot = _world.RootSlot.AddSlot("<color=cyan>Assets</color>");
 
         await ConvertAssets(exportRoot.Assets);
 
@@ -118,16 +121,9 @@ public partial class RootConverter : IDisposable
         avatarRootField.Reference.Target = _root;
         avatarRootVar.Reference.DriveFrom(avatarRootField.Reference);
 
-        // Move assets to the root (again)
+        // Move assets to the root (just to be sure)
         _assetRoot.SetParent(_root);
 
-        // The above move is sometimes not reflected in the saved record unless we wait a frame.
-        // Or two.
-        // Hopefully this is enough???
-        await new f.NextUpdate();
-        _assetRoot.SetParent(_root);
-        await new f.NextUpdate();
-        
         SavedGraph savedGraph = _root.SaveObject(f.DependencyHandling.CollectAssets);
         Record record = RecordHelper.CreateForObject<Record>(_root.Name, "", null);
         
