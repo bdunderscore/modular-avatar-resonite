@@ -29,7 +29,7 @@ public partial class RootConverter
                 BindMaterial(matId, mr.Materials.Add());
             }
 
-            Defer(PHASE_RESOLVE_REFERENCES, () =>
+            Defer(PHASE_RESOLVE_REFERENCES, "Register bones", () =>
             {
                 foreach (var boneId in component.Bones)
                 {

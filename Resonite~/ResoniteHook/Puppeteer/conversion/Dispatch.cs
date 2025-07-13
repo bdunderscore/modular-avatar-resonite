@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using FrooxEngine;
 using Google.Protobuf;
 
 using e = Elements.Core;
@@ -53,22 +54,28 @@ public partial class RootConverter
             (obj, untyped) => builder(obj, untyped.Asset_.Unpack<M>());
     }
 
-    private SortedDictionary<int, List<Func<Task>>> _deferredActions = new();
+    struct DeferredAction
+    {
+        public string Description;
+        public Func<Task> Action;
+    }
+    
+    private SortedDictionary<int, List<DeferredAction>> _deferredActions = new();
 
-    private void Defer(int phase, Func<Task> action)
+    private void Defer(int phase, string description, Func<Task> action)
     {
         if (!_deferredActions.TryGetValue(phase, out var actions))
         {
-            actions = new List<Func<Task>>();
+            actions = [];
             _deferredActions[phase] = actions;
         }
         
-        actions.Add(action);
+        actions.Add(new DeferredAction() { Action = action, Description = description });
     }
     
-    private void Defer(int phase, Action action)
+    private void Defer(int phase, string description, Action action)
     {
-        Defer(phase, () =>
+        Defer(phase, description, () =>
         {
             action();
             return Task.CompletedTask;
@@ -84,7 +91,8 @@ public partial class RootConverter
             
             foreach (var action in firstKV.Value)
             {
-                await action();
+                _context.StatusStream.SendProgressMessage(action.Description);
+                await action.Action();
                 await new f.ToWorld();
             }
         }

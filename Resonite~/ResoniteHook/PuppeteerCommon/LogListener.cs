@@ -34,11 +34,18 @@ public class LogListener : IDisposable
                 
                 if (_tcs.Task.IsCompleted) _tcs = new TaskCompletionSource();
                 waiter = _tcs;
-                token.Register(() => waiter.TrySetCanceled());
+                token.Register(() => waiter.TrySetResult());
             }
             
             await waiter.Task;
-        } while (true);
+        } while (!token.IsCancellationRequested);
+
+        return new()
+        {
+            Level = LogController.LogLevel.Debug,
+            Text = "(cancelled)",
+            Time = DateTime.UtcNow,
+        };
     }
     
     public void StopListening()

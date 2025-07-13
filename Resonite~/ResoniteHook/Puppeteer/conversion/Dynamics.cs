@@ -51,7 +51,7 @@ public partial class RootConverter
         float3 posOffset = collider.PositionOffset.Vec3();
         float3 heightOffset = -(collider.Height / 2f * float3.Up);
         
-        Defer(PHASE_BUILD_COLLIDERS, async () =>
+        Defer(PHASE_BUILD_COLLIDERS, "Build DynBone colliders", async () =>
         {
             var root = Object<f.Slot>(collider.TargetTransform);
             var sub = root.AddSlot("DB Collider");
@@ -90,7 +90,7 @@ public partial class RootConverter
         boneChild.Tag = DynBoneControllerTag;
         var db = boneChild.AttachComponent<f.DynamicBoneChain>();
 
-        Defer(PHASE_RESOLVE_REFERENCES, async () =>
+        Defer(PHASE_RESOLVE_REFERENCES, "Configure dynamic bones", async () =>
         {
             var base_radius = bone.Bones.Select(b => b.Radius).Max();
             

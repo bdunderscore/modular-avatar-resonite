@@ -87,6 +87,7 @@ public partial class RootConverter : IDisposable
         // Try to workaround missing assets issue - maybe a slot named "Assets" under the root is treated specially?
         _context.AssetRoot = _world.RootSlot.AddSlot("<color=cyan>Assets</color>");
 
+        _context.StatusStream.SendProgressMessage("Converting assets...");
         await ConvertAssets(exportRoot.Assets);
 
         // temporarily put the settings in the asset root, until we build the real root
@@ -94,6 +95,7 @@ public partial class RootConverter : IDisposable
         _context.Root = _context.AssetRoot;
         _context.SettingsNode = CreateSettingsNode();
         
+        _context.StatusStream.SendProgressMessage("Converting game objects...");
         _context.BuildComponentIndex(exportRoot.Root);
         _context.Root = await ConvertGameObject(exportRoot.Root, _world.RootSlot);
 
@@ -124,6 +126,7 @@ public partial class RootConverter : IDisposable
         // Move assets to the root (just to be sure)
         _assetRoot.SetParent(_root);
 
+        _context.StatusStream.SendProgressMessage("Exporting avatar...");
         SavedGraph savedGraph = _root.SaveObject(f.DependencyHandling.CollectAssets);
         Record record = RecordHelper.CreateForObject<Record>(_root.Name, "", null);
         
@@ -260,18 +263,13 @@ public partial class RootConverter : IDisposable
         
         System.Diagnostics.Stopwatch timeout = new();
         timeout.Start();
-        Defer(PHASE_FINALIZE, async () =>
+        Defer(PHASE_FINALIZE, "Waiting for texture variant generation...", async () =>
         {
             _textureBuildTimer.Start();
-            while (!textureComponent.IsAssetAvailable && timeout.ElapsedMilliseconds < 10_000)
-            {
-                await new f.ToBackground();
-                await Task.Delay(100);
-                await new f.ToWorld();
-            } 
+            await _context.WaitForAssetLoad<ITexture2D>(textureComponent);
             _textureBuildTimer.Stop();
         });
-        Defer(PHASE_JUST_BEFORE_PACKAGING, () =>
+        Defer(PHASE_JUST_BEFORE_PACKAGING, "Texture post-configuration", () =>
         {
             if (_textureBuildTimer.ElapsedMilliseconds > 0)
             {

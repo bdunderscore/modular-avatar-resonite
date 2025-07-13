@@ -1,4 +1,6 @@
-﻿using Elements.Core;
+﻿using System.Diagnostics;
+using Elements.Core;
+using FrooxEngine;
 
 namespace nadena.dev.resonity.remote.puppeteer.rpc;
 
@@ -103,6 +105,40 @@ public sealed class TranslateContext : IDisposable
                 AssetRoot?.Destroy();
                 Root?.Destroy();
             });
+        }
+    }
+
+    public async Task<T?> WaitForAssetLoad<T>(f.IAssetProvider<T> assetProvider)
+        where T : f.IAsset
+    {
+        Stopwatch sw = Stopwatch.StartNew();
+        while (!assetProvider.IsAssetAvailable && sw.ElapsedMilliseconds < 5000)
+        {
+            await new f.NextUpdate();
+        }
+        
+        var holder = assetProvider.FindNearestComponentOrSlot();
+        if (holder is Component c)
+        {
+            holder = c.Slot;
+        }
+        
+        if (assetProvider.GenericAsset.LoadState == AssetLoadState.Failed)
+        {
+            throw new Exception("Asset load failed: " + holder.Name);
+        }
+        
+        if (assetProvider.IsAssetAvailable)
+        {
+
+            Console.WriteLine($"Loaded {holder.Name} in {sw.ElapsedMilliseconds}ms");
+            return assetProvider.Asset;
+        }
+        else
+        {
+            Console.WriteLine($"[ERROR] Failed to load {holder.Name} in {sw.ElapsedMilliseconds}ms");
+
+            return default;
         }
     }
 }

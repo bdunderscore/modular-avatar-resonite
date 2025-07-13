@@ -65,7 +65,7 @@ public partial class RootConverter
         
         // TODO: handle other material types
         var materialComponent = holder.AttachComponent<f::PBS_Metallic>();
-        Defer(PHASE_RESOLVE_REFERENCES, () =>
+        Defer(PHASE_RESOLVE_REFERENCES, "Setting material references", () =>
         {
             materialComponent.AlbedoTexture.Value = AssetRefID<f.IAssetProvider<f.Texture2D>>(material.MainTexture);
         });
@@ -85,7 +85,7 @@ public partial class RootConverter
 
         var mat = holder.AttachComponent<f.XiexeToonMaterial>();
 
-        Defer(PHASE_RESOLVE_REFERENCES, () =>
+        Defer(PHASE_RESOLVE_REFERENCES, "Setting material texture references", () =>
         {
             mat.MainTexture.Value = AssetRefID<f.IAssetProvider<f.Texture2D>>(src.MainTexture);
             mat.NormalMap.Value = AssetRefID<f.IAssetProvider<f.Texture2D>>(src.NormalMap);

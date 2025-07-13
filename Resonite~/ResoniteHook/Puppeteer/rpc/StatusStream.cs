@@ -1,4 +1,5 @@
-﻿using Google.Protobuf;
+﻿using System.Diagnostics;
+using Google.Protobuf;
 using Grpc.Core;
 using nadena.dev.ndmf.proto.rpc;
 
@@ -9,6 +10,8 @@ public class StatusStream : IAsyncDisposable
     private readonly Lock _lock = new();
     private readonly IServerStreamWriter<ConversionStatusMessage> _stream;
     private int _seq;
+    private string _lastProgressMessage = "";
+    private Stopwatch _progressTimer = new();
 
     private Task lastSendTask = Task.CompletedTask;
     
@@ -30,6 +33,17 @@ public class StatusStream : IAsyncDisposable
     
     public void SendProgressMessage(string message)
     {
+        if (message == _lastProgressMessage)
+        {
+            return;
+        }
+
+        var elapsed = _progressTimer.ElapsedMilliseconds;
+        Console.WriteLine($"[Phase: {_lastProgressMessage}] Elapsed: {elapsed}ms");
+        
+        _lastProgressMessage = message;
+        _progressTimer.Restart();
+
         SendMessage(new()
         {
             ProgressMessage = message

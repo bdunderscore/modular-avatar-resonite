@@ -59,30 +59,28 @@ internal partial class FirstPersonVisibleFilter
         // Await mesh loading
         Stopwatch timer = new();
         timer.Start();
-        while (!mesh.IsAssetAvailable && timer.ElapsedMilliseconds < 5000)
-        {
-            await new F.NextUpdate();
-        }
 
-        if (!mesh.IsAssetAvailable)
-        {
-            throw new Exception("Failed to load MeshX asset for mesh " + mesh.Slot.Name);
-        }
-
-        var asset = mesh.Asset;
-
+        var meshUrl = mesh.URL.Value;
+        
         await new F.ToBackground();
         var meshx = new MeshX(); 
-        // meshx.Copy(asset.Data); - this doesn't copy some data for some reason
+        // meshx.Copy(asset.Data); - this doesn't copy some data for some reason; instead, we reload the mesh from LocalDB
 
-        using (var stream = new MemoryStream())
+        var assetRecord = await ctx.Engine.LocalDB.TryFetchAssetRecordWithMetadataAsync(meshUrl);
+        if (assetRecord == null)
         {
-            var tmp = new BlockClosureStream(stream);
-            asset.Data.Encode(tmp);
-
-            stream.Seek(0, SeekOrigin.Begin);
+            return new MeshProcessingResults()
+            {
+                AlwaysInvisibleSubmeshes = [],
+                CloneToOriginalIndex = []
+            };
+        }
+        
+        using (var stream = ctx.Engine.LocalDB.OpenAssetRead(assetRecord))
+        {
             meshx.Decode(stream);
         }
+        Console.WriteLine("[TIMING] Reload mesh: " + timer.ElapsedMilliseconds + "ms for mesh " + meshName);
         
         // determine which submeshes need to be split by looking at which vertices they touch
         bool[] isVertexInvisible = new bool[meshx.VertexCount];
@@ -111,8 +109,10 @@ internal partial class FirstPersonVisibleFilter
 
             isVertexInvisible[i] = isInvisible;
         }
+        Console.WriteLine("[TIMING] Identify invisible vertices: " + timer.ElapsedMilliseconds + "ms for mesh " + meshName);
 
         CheckMeshBoneIndices(meshx);
+        Console.WriteLine("[TIMING] Check mesh bone indices: " + timer.ElapsedMilliseconds + "ms for mesh " + meshName);
         
         
         while (meshx.SubmeshCount < minSubmeshes)
@@ -124,6 +124,7 @@ internal partial class FirstPersonVisibleFilter
             var newSubmesh = meshx.AddSubmesh(lastSubmesh.Topology);
             newSubmesh.Append(lastSubmesh);
         }
+        Console.WriteLine("[TIMING] Copy submeshes: " + timer.ElapsedMilliseconds + "ms for mesh " + meshName);
         
         int originalSubmeshCount = meshx.SubmeshCount;
         for (int submeshIndex = 0; submeshIndex < originalSubmeshCount; submeshIndex++)
@@ -184,14 +185,20 @@ internal partial class FirstPersonVisibleFilter
                 results.CloneToOriginalIndex.Add(submeshIndex);
             }
         }
+        Console.WriteLine("[TIMING] Adjust index buffers: " + timer.ElapsedMilliseconds + "ms for mesh " + meshName);
         
         CheckMeshBoneIndices(meshx);
+        
+        Console.WriteLine("[TIMING] Prior to save: " + timer.ElapsedMilliseconds + "ms for mesh " + meshName);
+        
         
         // Save meshX and reimport
         string tempFilePath = ctx.Engine.LocalDB.GetTempFilePath(".mesh");
         meshx.SaveToFile(tempFilePath);
-
+        Console.WriteLine("[TIMING] Save mesh: " + timer.ElapsedMilliseconds + "ms for mesh " + meshName);
+        
         Uri uri = await ctx.Engine.LocalDB.ImportLocalAssetAsync(tempFilePath, LocalDB.ImportLocation.Move);
+        Console.WriteLine("[TIMING] Import local asset async: " + timer.ElapsedMilliseconds + "ms for mesh " + meshName);
 
         await new F::ToWorld();
         

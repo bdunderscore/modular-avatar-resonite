@@ -32,10 +32,9 @@ public partial class RootConverter
         
         foreach (f.SkinnedMeshRenderer smr in parent.GetComponentsInChildren<f.SkinnedMeshRenderer>())
         {
-            while (!smr.Mesh.IsAssetAvailable)
+            if (await _context.WaitForAssetLoad(smr.Mesh.Target) == null)
             {
-                await new f::ToBackground();
-                await new f::ToWorld();
+                throw new Exception("Failed to load skinned mesh renderer mesh: " + smr.Mesh.Target);
             }
         }
 
@@ -49,7 +48,7 @@ public partial class RootConverter
             relay.Renderers.Add(smr);
         }
         
-        Defer(PHASE_RIG_SETUP, () =>
+        Defer(PHASE_RIG_SETUP, "Rig setup", () =>
         {
             // Change all bone names to be what BipedRig expects (and any non-humanoid bones become temporary names)
             // We also need to move any children of humanoid bones in order to avoid breaking FingerPoser configuration
@@ -103,7 +102,7 @@ public partial class RootConverter
             return Task.CompletedTask;
         });
         
-        Defer(PHASE_ENABLE_RIG, () =>
+        Defer(PHASE_ENABLE_RIG, "Enable VRIK", () =>
         {
             if (!FREEZE_AVATAR) rig.Slot.GetComponent<VRIK>().Enabled = true;
         });
@@ -115,18 +114,18 @@ public partial class RootConverter
         
         Console.WriteLine("=== TEST ===");
         
-        Defer(PHASE_AVATAR_SETUP, () => SetupAvatarDeferred(slot, spec));
-        Defer(PHASE_POSTPROCESS, () => new MeshLoadingFilter(_context).Apply());
-        Defer(PHASE_POSTPROCESS, () => new DynBoneAutoEnableFilter(_context).Apply());
-        Defer(PHASE_POSTPROCESS, () => new EyeSwingVariableFilter(_context).Apply());
-        Defer(PHASE_POSTPROCESS, () => new FaceMeshReferenceFilter(_context).Apply(spec));
-        Defer(PHASE_POSTPROCESS, () => new ThumbnailAssetProviderFilter(_context).Apply());
-        Defer(PHASE_POSTPROCESS, () => new RenderSettingsFilter(_context).Apply());
-        Defer(PHASE_POSTPROCESS, () => new AvatarPoseNodeRefFilter(_context).Apply());
-        Defer(PHASE_POSTPROCESS, () => new MiscRefFilter(_context).Apply());
-        Defer(PHASE_POSTPROCESS, () => new FirstPersonVisibleFilter(_context).Apply());
-        Defer(PHASE_POSTPROCESS, () => new VRIKFixupsFilter(_context).Apply());
-        Defer(PHASE_RESOLVE_REFERENCES, () => new BoneAnnotationsFilter(_context).Apply(spec));
+        Defer(PHASE_AVATAR_SETUP, "Deferred avatar setup", () => SetupAvatarDeferred(slot, spec));
+        Defer(PHASE_POSTPROCESS, "Mesh Loading Filter", () => new MeshLoadingFilter(_context).Apply());
+        Defer(PHASE_POSTPROCESS, "DynBone auto-enable", () => new DynBoneAutoEnableFilter(_context).Apply());
+        Defer(PHASE_POSTPROCESS, "EyeSwing filter", () => new EyeSwingVariableFilter(_context).Apply());
+        Defer(PHASE_POSTPROCESS, "Add face mesh reference", () => new FaceMeshReferenceFilter(_context).Apply(spec));
+        Defer(PHASE_POSTPROCESS, "Add thumbnail asset provider", () => new ThumbnailAssetProviderFilter(_context).Apply());
+        Defer(PHASE_POSTPROCESS, "Add render settings", () => new RenderSettingsFilter(_context).Apply());
+        Defer(PHASE_POSTPROCESS, "Add pose node references", () => new AvatarPoseNodeRefFilter(_context).Apply());
+        Defer(PHASE_POSTPROCESS, "Add misc references", () => new MiscRefFilter(_context).Apply());
+        Defer(PHASE_POSTPROCESS, "Add first person visible filter", () => new FirstPersonVisibleFilter(_context).Apply());
+        Defer(PHASE_POSTPROCESS, "VRIK fixups", () => new VRIKFixupsFilter(_context).Apply());
+        Defer(PHASE_RESOLVE_REFERENCES, "Adding bone annotations", () => new BoneAnnotationsFilter(_context).Apply(spec));
 
         return null;
     }
@@ -201,8 +200,8 @@ public partial class RootConverter
         settingsVar.VariableName.Value = ResoNamespaces.SettingsRoot;
         settingsVar.Reference.DriveFrom(settingsField.Reference);
         
-        Defer(PHASE_AWAIT_CLOUD_SPAWN, () => task);
-        Defer(PHASE_FINALIZE, () =>
+        Defer(PHASE_AWAIT_CLOUD_SPAWN, "Waiting for cloud spawn...", () => task);
+        Defer(PHASE_FINALIZE, "Finalizing avatar settings...", () =>
         {
             _settingsRoot.SetParent(_root, false);
             coreSys.SetParent(_root, false);
@@ -225,11 +224,12 @@ public partial class RootConverter
 
         var blendshapeIndices = new Dictionary<string, int>();
         if (targetMesh == null) return;
-        while (!targetMesh.Mesh.IsAssetAvailable)
+        
+        if (await _context.WaitForAssetLoad(targetMesh.Mesh.Target) == null)
         {
-            await new f.NextUpdate();
-            await new f.ToWorld();
+            throw new Exception("Failed to load viseme mesh: " + targetMesh.Mesh.Target);
         }
+        
         foreach (var (bs, i) in targetMesh.Mesh.Asset.Data.BlendShapes.Select((bs, i) => (bs.Name, i)))
         {
             if (bs != null) blendshapeIndices[bs] = i;

@@ -66,12 +66,12 @@ public class DynBoneAutoEnableFilter(TranslateContext context)
         // Await mesh loading
         Stopwatch timer = new();
         timer.Start();
-        while (!mesh.IsAssetAvailable && timer.ElapsedMilliseconds < 5000)
-        {
-            await new F.NextUpdate();
-        }
 
-        if (!mesh.IsAssetAvailable) return;
+        var meshAsset = await context.WaitForAssetLoad(mesh);
+        if (meshAsset == null)
+        {
+            return;
+        }
 
         HashSet<int> usedBoneIndices = new HashSet<int>();
         foreach (var binding in mesh.Asset?.Data?.RawBoneBindings ?? [])

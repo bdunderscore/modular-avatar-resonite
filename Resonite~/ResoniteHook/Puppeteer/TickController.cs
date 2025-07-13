@@ -1,3 +1,5 @@
+using Elements.Core;
+
 namespace nadena.dev.resonity.remote.puppeteer;
 
 public class TickController
@@ -10,6 +12,8 @@ public class TickController
 
     public void WaitFrame()
     {
+        var sw = new System.Diagnostics.Stopwatch();
+        sw.Start();
         if (activeRPCs > 0)
         {
             Thread.Sleep(10);
