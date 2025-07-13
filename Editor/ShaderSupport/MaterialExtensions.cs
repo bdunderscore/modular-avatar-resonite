@@ -64,7 +64,7 @@ namespace nadena.dev.ndmf.platform.resonite
         [return: NotNullIfNotNull("defaultValue")]
         public static float? GetFloatSafe(this Material mat, string name, float? defaultValue = null)
         {
-            if (!GetValidProperties(mat.shader).Contains(name)) return 0f;
+            if (!GetValidProperties(mat.shader).Contains(name)) return defaultValue;
 
             return mat.GetFloat(name);
         }
