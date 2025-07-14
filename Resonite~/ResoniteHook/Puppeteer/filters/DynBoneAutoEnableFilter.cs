@@ -105,7 +105,7 @@ public class DynBoneAutoEnableFilter(TranslateContext context)
 
         var f_active_multidriver = slot.AttachComponent<F.ValueMultiDriver<bool>>();
         f_active_multidriver.Value.DriveFrom(f_active_multidriver.Value, writeBack: true);
-        BuildActiveInHierarchySensor(slot, f_active_multidriver.Value);
+        await BuildActiveInHierarchySensor(slot, f_active_multidriver.Value);
 
         foreach (var group in groups)
         {
@@ -161,21 +161,21 @@ public class DynBoneAutoEnableFilter(TranslateContext context)
         }
     }
 
-    private (F.Slot, F.IField<bool>) BuildActiveInHierarchySensor(F.Slot slot, IField<bool> field)
+    private async Task<(F.Slot, F.IField<bool>)> BuildActiveInHierarchySensor(F.Slot slot, IField<bool> field)
     {
-        using var builder = new FluxBuilder(slot);
-        using var vertical = builder.Vertical();
+        await using var builder = new FluxBuilder(slot);
+        var vertical = builder.Vertical();
         var vs = vertical.Spawn<PF.CoreNodes.ValueSource<bool>>();
         var globalRef = vs.Slot.AttachComponent<GlobalReference<F.IValue<bool>>>();
         globalRef.Reference.Target = field;
         vs.Source.Target = globalRef;
 
-        using (var activateGroup = vertical.Horizontal())
+        var activateGroup = vertical.Horizontal();
         {
             OnActivated onActivated;
             OnStart onStart;
-            ValueInput<bool> vs_true; 
-            using (var subVert = activateGroup.Vertical())
+            ValueInput<bool> vs_true;
+            var subVert = activateGroup.Vertical();
             {
                 onActivated = subVert.Spawn<OnActivated>();
                 onStart = subVert.Spawn<OnStart>();
@@ -190,12 +190,12 @@ public class DynBoneAutoEnableFilter(TranslateContext context)
             onActivated.Trigger.Target = write;
             onStart.Trigger.Target = write;
         }
-        
-        using (var deactivateGroup = vertical.Horizontal())
+
+        var deactivateGroup = vertical.Horizontal();
         {
             OnDeactivated onDeactivated;
-            ValueInput<bool> vs_false; 
-            using (var subVert = deactivateGroup.Vertical())
+            ValueInput<bool> vs_false;
+            var subVert = deactivateGroup.Vertical();
             {
                 onDeactivated = subVert.Spawn<OnDeactivated>();
                 vs_false = subVert.Spawn<ValueInput<bool>>();
