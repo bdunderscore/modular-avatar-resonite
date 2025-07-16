@@ -17,6 +17,7 @@ using UnityEditor;
 using UnityEditor.Graphs;
 using UnityEditor.PackageManager.UI;
 using UnityEngine;
+using UnityEngine.Animations;
 using PackageManager = UnityEditor.PackageManager;
 using UnityEngine.UI;
 using VRC.SDK3.Avatars.Components;
@@ -253,6 +254,9 @@ namespace nadena.dev.ndmf.platform.resonite
                     case TagVisibleInFirstPerson:
                         protoComponent = new p.VisibleInFirstPerson() { Visible = true };
                         hasVHA = true;
+                        break;
+                    case IConstraint constraint:
+                        protoComponent = TranslateConstraint(constraint);
                         break;
                     
                     default: continue;

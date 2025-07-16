@@ -1,0 +1,66 @@
+﻿syntax = "proto3";
+option csharp_namespace = "nadena.dev.ndmf.proto";
+
+package nadena.dev.ndmf.proto;
+
+import "proto/base_types.proto";
+
+enum ConstraintType {
+  POSITION_CONSTRAINT = 0;
+  PARENT_CONSTRAINT = 1;
+  ROTATION_CONSTRAINT = 2;
+  LOOK_AT_OR_AIM_CONSTRAINT = 3;
+  SCALE_CONSTRAINT = 4;
+}
+
+// Configures the roll of the target (Z) axis after the constraint is applied.
+// This is a generalization of the LookAt and Aim constraints, and logically follow the following steps:
+// 1. First, we perform a rotation to align the object's aim axis with the aim target, without applying any roll.
+// 2. Next, if up_direction is specified, we rotate the aim axis to align with the up_direction (potentially relative to the reference_object).
+// 3. Finally, we apply the roll_angle around the aim axis.
+message ConstraintRollConfiguration {
+  // The object that `up_direction` is relative to. If unspecified, uses world space.
+  optional ObjectID reference_object = 1;
+  // The world up direction in the space of `reference_object`.
+  optional Vector world_up_direction = 2;
+  // The local up direction - if unspecified, we use +Y
+  optional Vector local_up_direction = 3;
+  optional float roll_angle = 4;
+}
+
+message Constraint {
+  ConstraintType type = 1;
+  
+  float weight = 2;
+  bool is_active = 3;
+  
+  // For LOOK_AT_OR_AIM_CONSTRAINT, this is the axis to turn to point at the target.
+  optional Vector aim_vector = 4;
+  optional ConstraintRollConfiguration roll_configuration = 6;
+  
+  // Transforms applied when weight reduced to zero
+  optional Quaternion rotation_at_rest = 7;
+  optional Vector position_at_rest = 9;
+
+  // Offsets applied to the computed orientation
+  optional Quaternion rotation_offset = 8;
+  optional Vector position_offset = 10;
+  
+  repeated ConstraintSource sources = 11;
+  
+  optional ObjectID target_transform = 12;
+  bool local_space = 13;
+}
+
+message ConstraintSource {
+  ObjectID transform = 1;
+  float weight = 2;
+
+  optional Vector position_offset = 3;
+  optional Quaternion rotation_offset = 4;
+  
+  // If true, we interpret offsets as being within the space of the source transform.
+  // If false, we apply this offset after transforming into the constraint's parent space.
+  // TODO: Is this correct? Verify behavior matches parent constraint vs position/rotation constraint behavior
+  bool offsets_in_source_space = 5;
+}

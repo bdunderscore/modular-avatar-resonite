@@ -105,6 +105,7 @@ public partial class RootConverter
         RegisterComponentType<p::AvatarDescriptor>(SetupAvatar);
         RegisterComponentType<p::DynamicCollider>(ProcessDynamicCollider);
         RegisterComponentType<p::DynamicBone>(ProcessDynamicBone);
+        RegisterComponentType<p::Constraint>(ProcessConstraint);
         
         // Assets
         RegisterAssetType<p::Texture>(CreateTexture);
