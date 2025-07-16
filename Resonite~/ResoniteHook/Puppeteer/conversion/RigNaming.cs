@@ -69,7 +69,7 @@ internal static class RigNaming
         }
     }
 
-    public static IDisposable Scope(RootConverter converter, Slot root, AvatarDescriptor avDesc)
+    public static BoneNamingScope Scope(RootConverter converter, Slot root, AvatarDescriptor avDesc)
     {
         List<Action> revertActions = new();
 
@@ -80,6 +80,7 @@ internal static class RigNaming
         foreach (var (id, name) in GenerateHumanoidBoneNames(avDesc))
         {
             var slot = converter.Object<Slot>(id);
+            
             if (slot != null) 
             {
                 slot.Name = name;
@@ -121,7 +122,7 @@ internal static class RigNaming
             }
         }
         
-        return new Revert(revertActions);
+        return new BoneNamingScope(revertActions, humanoidBones);
 
         void VisitSlot(Slot slot)
         {
@@ -142,10 +143,11 @@ internal static class RigNaming
             }
         }
     }
-    
-    
-    private class Revert(List<Action> actions) : IDisposable
+
+    public class BoneNamingScope(List<Action> actions, HashSet<Slot> humanoidBones) : IDisposable
     {
+        public HashSet<Slot> HumanoidBones => humanoidBones;
+        
         public void Dispose()
         {
             foreach (var action in actions)

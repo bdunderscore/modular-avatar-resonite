@@ -25,6 +25,49 @@ public partial class RootConverter
 
     private f.Slot? _settingsRoot;
     
+    /// <summary>
+    /// Ensures that we don't have any dynamic bone drives or similar things on humanoid bones.
+    ///
+    /// If we enter VRIK setup with driven bones, it will prevent VRIK from installing drives, which results in crazy
+    /// bone wiggling. The main cause of this is if we have Dynamic Bones (eg - driving toes) on humanoid bones;
+    /// as such, we handle this by creating an intermediate bone for VRIK's purposes, and letting DB drive the inner bone.
+    ///
+    /// However, if we have a humanoid bone that is a child of another humanoid bone, we violently break the drive of
+    /// the parent instead.
+    /// </summary>
+    /// <param name="humanoidBones"></param>
+    /// <exception cref="NotImplementedException"></exception>
+    private static void EnsureHumanoidBonesNotDriven(HashSet<Slot> humanoidBones)
+    {
+        foreach (var bone in humanoidBones)
+        {
+            var anyDriven = bone.Position_Field.IsDriven || bone.Rotation_Field.IsDriven || bone.Scale_Field.IsDriven;
+            if (!anyDriven) continue;
+
+            if (humanoidBones.Any(b => b != bone && b.IsChildOf(bone)))
+            {
+                // Break all drives
+                bone.Position_Field.ActiveLink?.ReleaseLink();
+                bone.Rotation_Field.ActiveLink?.ReleaseLink();
+                bone.Scale_Field.ActiveLink?.ReleaseLink();
+            }
+            else
+            {
+                // Create intermediate bones for DB usage
+                var p1 = bone.Parent.AddSlot(bone.Name);
+                var p2 = p1.AddSlot("ReverseTransform<NoIK>");
+                var p3 = p2.AddSlot("ReverseTransform<NoIK>");
+
+                p2.LocalRotation = p1.LocalRotation.Inverted;
+                p2.LocalScale = 1/p1.LocalScale;
+                p3.LocalPosition = -p1.LocalPosition;
+                
+                bone.SetParent(p3, keepGlobalTransform: false);
+                bone.Name += "<NoIK>";
+            }
+        }
+    }
+    
     private async Task SetupRig(f.Slot parent, p.AvatarDescriptor avDesc)
     {
         // This is a virtual component that tags a slot as being the root of a rigged model
@@ -48,13 +91,19 @@ public partial class RootConverter
             relay.Renderers.Add(smr);
         }
         
-        Defer(PHASE_RIG_SETUP, "Rig setup", () =>
+        Defer(PHASE_RIG_SETUP, "Rig setup", async () =>
         {
             // Change all bone names to be what BipedRig expects (and any non-humanoid bones become temporary names)
             // We also need to move any children of humanoid bones in order to avoid breaking FingerPoser configuration
 
             using (var scope = RigNaming.Scope(this, _root, avDesc))
             {
+                
+                // Ensure any field drives are reflected before we start
+                await new f.NextUpdate();
+
+                EnsureHumanoidBonesNotDriven(scope.HumanoidBones);
+                
                 // Invoke ModelImporter to set up the rig
                 var settings = new f.ModelImportSettings()
                 {
@@ -97,9 +146,7 @@ public partial class RootConverter
 
                 // Avoid the rig moving while we're setting up the avatar by disabling IK
                 rig.Slot.GetComponent<VRIK>().Enabled = false;
-            }
-
-            return Task.CompletedTask;
+            } 
         });
         
         Defer(PHASE_ENABLE_RIG, "Enable VRIK", () =>
