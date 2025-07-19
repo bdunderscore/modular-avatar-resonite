@@ -52,7 +52,18 @@ public partial class RootConverter
 
         var matSlot = holder.AddSlot(asset.Name);
 
-        var mat = await CreateXSToonMaterial(asset.Name, matSlot.AddSlot("XSToonMaterial"), material);
+        IAssetProvider<Material> mat;
+
+        switch (material.Category)
+        {
+            case p.MaterialCategory.FakeShadow:
+                mat = await _context.GetInvisibleMaterial();
+                break;
+            case p.MaterialCategory.Toon:
+            default:
+                mat = await CreateXSToonMaterial(asset.Name, matSlot.AddSlot("XSToonMaterial"), material);
+                break;
+        }
 
         var dynVar = matSlot.AttachComponent<f.DynamicReferenceVariableDriver<IAssetProvider<f.Material>>>();
         var referenceField = matSlot.AttachComponent<f.ReferenceField<f.IAssetProvider<f.Material>>>();

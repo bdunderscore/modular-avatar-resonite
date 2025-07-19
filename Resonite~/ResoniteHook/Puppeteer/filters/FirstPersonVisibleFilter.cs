@@ -35,20 +35,9 @@ internal partial class FirstPersonVisibleFilter(TranslateContext ctx)
         await Task.WhenAll(tasks);
     }
 
-    private async Task<F.IAssetProvider<F.Material>> GetInvisibleMaterial()
+    private Task<F.IAssetProvider<F.Material>> GetInvisibleMaterial()
     {
-        await new F.ToWorld();
-        if (invisibleMaterial != null) return invisibleMaterial;
-        
-        var slot = ctx.AssetRoot!.AddSlot("Invisible Material");
-        
-        // PBS_RimSpecular is selected as it casts a shadow but otherwise is completely invisible.
-        var mat = slot.AttachComponent<F.PBS_RimSpecular>();
-        mat.AlbedoColor.Value = new colorX(0, 0, 0, 0);
-        mat.RimColor.Value = new colorX(0, 0, 0, 0);
-        mat.Transparent.Value = true;
-
-        return invisibleMaterial = mat;
+        return ctx.GetInvisibleMaterial();
     }
 
     private void ResolveVisibility()

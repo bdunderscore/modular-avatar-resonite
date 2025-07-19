@@ -38,19 +38,18 @@ enum CullMode {
   NONE = 2;
 }
 
-/*
 enum MaterialCategory {
   PBR = 0;
   UNLIT = 1;
   TOON = 2;
+  FAKE_SHADOW = 3;
 }
- */
 
 message Material {
+  MaterialCategory category = 15;
   optional AssetID main_texture = 1;
   optional ScaleOffset main_texture_scale_offset = 2;
   optional Color main_color = 3;
-  // blend mode
   optional AssetID normal_map = 4;
   optional ScaleOffset normal_map_scale_offset = 5;
   optional AssetID emission_map = 6;

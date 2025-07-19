@@ -23,6 +23,15 @@ namespace nadena.dev.ndmf.platform.resonite
             protoMat = null;
             if (!IsLiltoonShader(material.shader)) return false;
 
+            if (material.shader.name.Contains("FakeShadow"))
+            {
+                protoMat = new()
+                {
+                    Category = MaterialCategory.FakeShadow
+                };
+                return true;
+            }
+
             // Clone material as the bake operations are destructive
             material = new Material(material);
             _tempObjects.Add(material);

@@ -30,6 +30,27 @@ public sealed class TranslateContext : IDisposable
     public f::Engine Engine => _engine;
     public f::World World => _world;
 
+    private IAssetProvider<Material>? _invisibleMaterial;
+
+    public async Task<IAssetProvider<Material>> GetInvisibleMaterial()
+    {
+        if (_invisibleMaterial != null)
+        {
+            return _invisibleMaterial;
+        }
+        
+        await new ToWorld();    
+        var slot = AssetRoot!.AddSlot("Invisible Material");
+        
+        // PBS_RimSpecular is selected as it casts a shadow but otherwise is completely invisible.
+        var mat = slot.AttachComponent<PBS_RimSpecular>();
+        mat.AlbedoColor.Value = new colorX(0, 0, 0, 0);
+        mat.RimColor.Value = new colorX(0, 0, 0, 0);
+        mat.Transparent.Value = true;
+
+        return _invisibleMaterial = mat;
+    }
+    
     public Dictionary<string, List<(p::ObjectID, p.Component)>> ProtoComponents { get; } = new();
 
     public TranslateContext(f::Engine engine, f::World world, StatusStream statusStream)
