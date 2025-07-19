@@ -265,6 +265,10 @@ public partial class RootConverter : IDisposable
         timeout.Start();
         Defer(PHASE_FINALIZE, "Waiting for texture variant generation...", async () =>
         {
+            if (_textureBuildTimer.ElapsedMilliseconds > 5000)
+            {
+                return; // don't spend a long time on this
+            }
             _textureBuildTimer.Start();
             await _context.WaitForAssetLoad<ITexture2D>(textureComponent);
             _textureBuildTimer.Stop();
