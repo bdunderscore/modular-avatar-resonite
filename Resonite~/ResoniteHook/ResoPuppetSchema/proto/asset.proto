@@ -67,6 +67,12 @@ message Material {
   // support it as optional.
   optional int32 unity_render_queue = 14;
 
+  // TODO - packing this is a bit ugly but avoids needing renderer access or graphics manipulation on the puppet side
+  optional AssetID smoothness_metallic_reflection_map = 16;
+  optional float smoothness = 17;
+  optional float metallic = 18;
+  optional float reflectivity = 19;
+  
   // TODO...
 }
 

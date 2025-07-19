@@ -3,6 +3,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using nadena.dev.ndmf.proto;
+using UnityEditor;
 using UnityEngine;
 using Material = UnityEngine.Material;
 using Texture = UnityEngine.Texture;
@@ -44,6 +45,15 @@ namespace nadena.dev.ndmf.platform.resonite
 
             if (!base.TryTranslateMaterial(material, out protoMat)) return false;
             
+            if (smoothnessTex.textureValue != null || metallicGlossMap.textureValue != null || reflectionColorTex.textureValue != null)
+            {
+                BakeMetallicMap(material, protoMat);
+            }
+
+            protoMat.Metallic = metallic.floatValue;
+            protoMat.Smoothness = smoothness.floatValue;
+            protoMat.Reflectivity = reflectance.floatValue;
+            
             // Update culling/etc settings based on liltoon config
             // TODO: lilToonMulti
 
@@ -64,6 +74,33 @@ namespace nadena.dev.ndmf.platform.resonite
             }
 
             return true;
+        }
+
+        private void BakeMetallicMap(Material material, proto.Material protoMat)
+        {
+            Material tmpMat = new Material(Shader.Find("Hidden/NDMF/BakeMetallicGlossReflectionMap"));
+            _tempObjects.Add(tmpMat);
+
+            tmpMat.SetTexture("_Smoothness", smoothnessTex.textureValue);
+            tmpMat.SetTexture("_Metallic", metallicGlossMap.textureValue);
+            tmpMat.SetTexture("_ReflectionColorTex", reflectionColorTex.textureValue);
+            tmpMat.SetTextureOffset("_Smoothness", material.GetTextureOffset(smoothnessTex.propertyName));
+            tmpMat.SetTextureScale("_Smoothness", material.GetTextureScale(smoothnessTex.propertyName));
+            tmpMat.SetTextureOffset("_Metallic", material.GetTextureOffset(metallicGlossMap.propertyName));
+            tmpMat.SetTextureScale("_Metallic", material.GetTextureScale(metallicGlossMap.propertyName));
+            tmpMat.SetTextureOffset("_ReflectionColorTex", material.GetTextureOffset(reflectionColorTex.propertyName));
+            tmpMat.SetTextureScale("_ReflectionColorTex", material.GetTextureScale(reflectionColorTex.propertyName));
+            tmpMat.SetColor("_ReflectionColor", reflectionColor.colorValue);
+
+            Texture2D? newTex = null;
+            RunBake(ref newTex, tmpMat, smoothnessTex.textureValue, metallicGlossMap.textureValue,
+                reflectionColorTex.textureValue);
+            newTex.name = $"{material.name}_MetallicGlossReflectionMap";
+            if (textureImporter(newTex, null, out var id, out _))
+            {
+                protoMat.SmoothnessMetallicReflectionMap = id;
+            }
+            _tempObjects.Add(newTex);
         }
 
         protected override bool GetOrBakeMainTexture(Material mat, out Texture? mainTex, out Texture? importerReference, out Vector2 scale,

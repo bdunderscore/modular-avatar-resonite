@@ -28,9 +28,11 @@ using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
 #if MA_LILTOON_PRESENT
+using System;
 using lilToon;
 #endif
 
@@ -815,8 +817,10 @@ namespace nadena.dev.ndmf.platform.resonite
                     CopyTextureRef(hsvgMaterial, material, main3rdBlendMask.name);
                 }
 
+                hsvgMaterial.SetTexture("_MainTex", bufMainTexture);
+                
                 Texture2D outTexture = null;
-                RunBake(ref outTexture, bufMainTexture, hsvgMaterial);
+                RunBake(ref outTexture, hsvgMaterial);
 
                 return outTexture;
             }
@@ -889,7 +893,7 @@ namespace nadena.dev.ndmf.platform.resonite
                 }
 
                 Texture2D outTexture = null;
-                RunBake(ref outTexture, srcTexture, hsvgMaterial);
+                RunBake(ref outTexture, hsvgMaterial);
                 
                 return outTexture;
             }
@@ -927,7 +931,7 @@ namespace nadena.dev.ndmf.platform.resonite
                 }
 
                 Texture2D outTexture = null;
-                RunBake(ref outTexture, srcTexture, hsvgMaterial);
+                RunBake(ref outTexture, hsvgMaterial);
 
                 return outTexture;
             }
@@ -960,7 +964,7 @@ namespace nadena.dev.ndmf.platform.resonite
                 hsvgMaterial.SetTexture(main3rdTex.name, emissionBlendMask ?? Texture2D.whiteTexture);
 
                 Texture2D outTexture = null;
-                RunBake(ref outTexture, srcTexture, hsvgMaterial, bufMainTexture);
+                RunBake(ref outTexture, hsvgMaterial, bufMainTexture);
 
                 return outTexture;
             }
@@ -992,7 +996,7 @@ namespace nadena.dev.ndmf.platform.resonite
 
 
             Texture2D outTexture = null;
-            RunBake(ref outTexture, srcTexture, hsvgMaterial);
+            RunBake(ref outTexture, hsvgMaterial);
 
             return outTexture;
         }
@@ -1015,7 +1019,7 @@ namespace nadena.dev.ndmf.platform.resonite
                 hsvgMaterial.SetTexture(mainTex.name, srcTexture ?? Texture2D.whiteTexture);
 
                 Texture2D outTexture = null;
-                RunBake(ref outTexture, srcTexture, hsvgMaterial);
+                RunBake(ref outTexture, hsvgMaterial);
 
                 return outTexture;
             }
@@ -1045,30 +1049,45 @@ namespace nadena.dev.ndmf.platform.resonite
             hsvgMaterial.SetTexture(mainTex.name, srcTexture ?? Texture2D.whiteTexture);
 
             Texture2D outTexture = null;
-            RunBake(ref outTexture, srcTexture, hsvgMaterial);
+            RunBake(ref outTexture, hsvgMaterial);
 
             return outTexture;
         }
 
-        public static void RunBake(ref Texture2D outTexture, Texture2D srcTexture, Material material, Texture2D referenceTexture = null)
+        public void RunBake(ref Texture2D outTexture, Material material, params Texture[] referenceTextures)
         {
-            int width = 4096;
-            int height = 4096;
-            if(referenceTexture != null)
+            int width = 1;
+            int height = 1;
+
+            List<Texture> refTex = referenceTextures.ToList();
+            foreach (var prop in new[]
+                         { this.mainTex, main2ndTex, main3rdTex, alphaMask, main2ndBlendMask, main3rdBlendMask })
             {
-                width = referenceTexture.width;
-                height = referenceTexture.height;
+                if (material.shader.FindPropertyIndex(prop.propertyName) >= 0 && material.GetTexture(prop.propertyName) is Texture2D tex2d)
+                {
+                    refTex.Add(tex2d);
+                }
             }
-            else if(srcTexture != null)
+            
+            foreach (var tex in refTex)
             {
-                width = srcTexture.width;
-                height = srcTexture.height;
+                if (tex == null) continue;
+                
+                // Round up to next power of two
+                while (width < tex.width) width *= 2;
+                while (height < tex.height) height *= 2;
             }
+
+            // Fallback size
+            if (width == 1) width = 2048;
+            if (height == 1) height = 2048;
+            
             outTexture = new Texture2D(width, height);
 
             var bufRT = RenderTexture.active;
             var dstTexture = RenderTexture.GetTemporary(width, height);
-            Graphics.Blit(srcTexture, dstTexture, material);
+            var mainTex = material.shader.FindPropertyIndex("_MainTex") >= 0 ? material.GetTexture("_MainTex") : null;
+            Graphics.Blit(mainTex, dstTexture, material);
             RenderTexture.active = dstTexture;
             outTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
             outTexture.Apply();

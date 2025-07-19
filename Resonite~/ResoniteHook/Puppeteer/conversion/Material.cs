@@ -102,6 +102,7 @@ public partial class RootConverter
             mat.NormalMap.Value = AssetRefID<f.IAssetProvider<f.Texture2D>>(src.NormalMap);
             mat.EmissionMap.Value = AssetRefID<f.IAssetProvider<f.Texture2D>>(src.EmissionMap);     
             mat.Matcap.Value = AssetRefID<f.IAssetProvider<f.Texture2D>>(src.MatcapTexture);
+            mat.MetallicGlossMap.Target = Asset<f.IAssetProvider<f.ITexture2D>>(src.SmoothnessMetallicReflectionMap)!;
         });
         
         if (src.MainTextureScaleOffset != null)
@@ -147,6 +148,10 @@ public partial class RootConverter
             case p.CullMode.Front: mat.Culling.Value = f.Culling.Front; break;
             case p.CullMode.None: mat.Culling.Value = f.Culling.Off; break;
         }
+
+        if (src.HasSmoothness) mat.Glossiness.Value = src.Smoothness;
+        if (src.HasMetallic) mat.Metallic.Value = src.Metallic;
+        if (src.HasReflectivity) mat.Reflectivity.Value = src.Reflectivity;
         
         // TODO: matcap
         // TODO occlusion map?
@@ -166,9 +171,6 @@ public partial class RootConverter
         var bindings = mat.Slot.AddSlot("Bindings");
         
         BindField(mat.Saturation);
-        BindField(mat.Metallic);
-        BindField(mat.Glossiness);
-        BindField(mat.Reflectivity);
         BindField(mat.RimColor);
         BindField(mat.RimAlbedoTint);
         BindField(mat.RimIntensity);

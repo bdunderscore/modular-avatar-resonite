@@ -494,7 +494,10 @@ namespace nadena.dev.ndmf.platform.resonite
             var textureImporter = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(refTex)) as TextureImporter;
             if (textureImporter != null)
             {
-                if (textureImporter.maxTextureSize > 0)
+                // Only set max resolution if the texture was not baked
+                // (if we baked the texture, it's possible we might use a higher resolution after merging multiple
+                // layers, and there's also no point going to a higher resolution than the baked texture)
+                if (refTex == tex2d && textureImporter.maxTextureSize > 0)
                 {
                     protoTex.MaxResolution = (uint) textureImporter.maxTextureSize;
                 }

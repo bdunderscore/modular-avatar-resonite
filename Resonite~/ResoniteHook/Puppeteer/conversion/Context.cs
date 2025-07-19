@@ -144,7 +144,7 @@ public sealed class TranslateContext : IDisposable
             holder = c.Slot;
         }
         
-        if (assetProvider?.GenericAsset?.LoadState == AssetLoadState.Failed)
+        if (assetProvider.Asset?.LoadState == AssetLoadState.Failed)
         {
             throw new Exception("Asset load failed: " + holder.Name);
         }
