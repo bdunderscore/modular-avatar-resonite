@@ -250,7 +250,7 @@ public partial class RootConverter
             case "breast":
             {
                 db.Inertia.Value = 0.9f;
-                db.InertiaForce.Value = 2.0f;
+                db.InertiaForce.Value = 0.75f;
                 db.Damping.Value = 10f;
                 db.Elasticity.Value = 100f;
                 db.Stiffness.Value = 0.67f;
