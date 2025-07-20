@@ -1,0 +1,42 @@
+module LookAtWithRoll
+
+in Self: Slot
+
+in RotationAtRest: floatQ
+in RotationOffset: floatQ
+in Weight: float
+
+in Target: float3
+in UseLocalSpace: bool
+in Roll: float
+
+out this: floatQ
+
+use FromTo
+
+where {
+    Self = Self->ObjectRelay;
+    RotationAtRest = RotationAtRest->ValueRelay;
+    RotationOffset = RotationOffset->ValueRelay;
+    Weight = Weight->ValueRelay;
+
+    Target = Target->ValueRelay;
+    UseLocalSpace = UseLocalSpace->ValueRelay;
+    Roll = Roll->ValueRelay;
+
+    Parent = Self->GetParentSlot;
+
+    FromAxis = Pack_Float3(0.0, 0.0, 1.0);
+
+    Target = UseLocalSpace ? Target : GlobalPointToLocal(Instance=Parent, GlobalPoint=Target);
+    TargetDirection = (Target - Self->LocalTransform.LocalPosition)->Normalized_Float3;
+
+
+    Slew = FromTo(From=FromAxis, To=TargetDirection);
+
+    WithRoll = Slew * AxisAngle_floatQ(Axis=Pack_Float3(0.0, 0.0, 1.0), Angle=Roll);
+
+    WithRoll = RotationOffset * WithRoll;
+
+    Slerp_floatQ(A=RotationAtRest, B=WithRoll, T=Weight);
+}

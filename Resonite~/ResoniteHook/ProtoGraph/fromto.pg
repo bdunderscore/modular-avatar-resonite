@@ -1,0 +1,24 @@
+module FromTo
+
+// Computes quaternion rotation to slew from vector From to vector To, with zero roll
+
+in From: float3
+in To: float3
+
+out this: floatQ
+
+where {
+    Dot = Dot_Float3(From, To);
+    Cross = Cross_Float3(From, To);
+
+    IdentityQ = Pack_FloatQ(X=0.0, Y=0.0, Z=0.0, W=1.0);
+
+    Parallel: floatQ = IdentityQ;
+    Antiparallel: floatQ = AxisAngle_floatQ((Cross->Magnitude_Float3 > 0.0) ? Cross : Pack_Float3(0.0, 1.0, 0.0));
+
+    W = Sqrt_Float(Dot / 2.0);
+    XYZ = Mul_Float3_Float(Cross, W * 2.0)->Unpack_Float3;
+    Other = Pack_FloatQ(X=XYZ.X, Y=XYZ.Y, Z=XYZ.Z, W=W);
+
+    (Dot >= 1.0) ? Parallel : ((Dot <= 1.0) ? Antiparallel : Other);
+}

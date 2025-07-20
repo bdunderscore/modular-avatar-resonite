@@ -1,0 +1,25 @@
+module AimConstraint
+
+in  Self: Slot
+in  UpReference: Slot
+in  Target: Slot
+
+out this: floatQ
+
+where {
+    Self = Self->ObjectRelay;
+    UpReference = UpReference->ObjectRelay;
+    Target = Target->ObjectRelay;
+
+    Parent = Self->GetParentSlot;
+    SelfLocalPos = Self->LocalTransform.LocalPosition;
+    LocalUpDirection = (GlobalPointToLocal(Instance=Parent, GlobalPoint=UpReference->GlobalTransform.GlobalPosition) - SelfLocalPos)->Normalized_Float3;
+    LocalTargetDirection = (GlobalPointToLocal(Instance=Parent, GlobalPoint=Target->GlobalTransform.GlobalPosition) - SelfLocalPos)->Normalized_Float3;
+
+    // Make up direction perpendicular to the target direction
+    OrthoY = (LocalUpDirection - Mul_Float3_Float(A=LocalTargetDirection, B=Dot_Float3(A=LocalUpDirection, B=LocalTargetDirection)))->Normalized_Float3;
+    OrthoZ = LocalTargetDirection;
+    OrthoX = Cross_Float3(A=OrthoY, B=LocalTargetDirection);
+
+    PackColumns_Float3x3(Column0=OrthoX, Column1=OrthoY, Column2=OrthoZ)->Decomposed_Rotation_Float3x3;
+}
