@@ -9,6 +9,7 @@ using FrooxEngine.FinalIK;
 using FrooxEngine.Store;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
+using nadena.dev.resonity.engine;
 using nadena.dev.resonity.remote.puppeteer.misc;
 using ProtoFlux.Runtimes.Execution.Nodes.FrooxEngine.Time;
 using SkyFrost.Base;
@@ -55,7 +56,7 @@ public partial class RootConverter : IDisposable
         return _context.ObjectRefID<T>(id);
     }
     
-    public RootConverter(f::Engine engine, f::World world, StatusStream stream)
+    public RootConverter(EngineController engine, f::World world, StatusStream stream)
     {
         InitComponentTypes();
         _context = new TranslateContext(engine, world, stream);

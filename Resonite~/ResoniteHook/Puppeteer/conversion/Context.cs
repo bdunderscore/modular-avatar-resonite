@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using Elements.Core;
 using FrooxEngine;
+using nadena.dev.resonity.engine;
+using nadena.dev.resonity.gadgets;
 
 namespace nadena.dev.resonity.remote.puppeteer.rpc;
 
@@ -24,11 +26,13 @@ public sealed class TranslateContext : IDisposable
     public f.Slot? AssetRoot { get; set; }
     public f.Slot? SettingsNode { get; set; }
 
+    private readonly EngineController _engineController;
     private readonly f::Engine _engine;
     private readonly f::World _world;
     
     public f::Engine Engine => _engine;
     public f::World World => _world;
+    public GadgetLibrary Gadgets => _engineController.GadgetLibrary;
 
     private IAssetProvider<Material>? _invisibleMaterial;
 
@@ -53,9 +57,10 @@ public sealed class TranslateContext : IDisposable
     
     public Dictionary<string, List<(p::ObjectID, p.Component)>> ProtoComponents { get; } = new();
 
-    public TranslateContext(f::Engine engine, f::World world, StatusStream statusStream)
+    public TranslateContext(EngineController controller, f::World world, StatusStream statusStream)
     {
-        _engine = engine;
+        _engineController = controller;
+        _engine = _engineController.Engine;
         _world = world;
         _statusStream = statusStream;
     }

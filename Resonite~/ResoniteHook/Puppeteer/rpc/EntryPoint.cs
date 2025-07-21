@@ -7,6 +7,7 @@ using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using JetBrains.Annotations;
 using nadena.dev.ndmf.proto.rpc;
+using nadena.dev.resonity.engine;
 using ProtoFlux.Runtimes.Execution.Nodes.Math.Constants;
 
 namespace nadena.dev.resonity.remote.puppeteer.rpc;
@@ -14,7 +15,7 @@ namespace nadena.dev.resonity.remote.puppeteer.rpc;
 public class EntryPoint : nadena.dev.ndmf.proto.rpc.ResoPuppeteer.ResoPuppeteerBase
 {
     private static readonly Empty Empty = new Empty();
-    private readonly Engine _engine;
+    private readonly EngineController _engine;
     private readonly World _world;
     private readonly TickController _tickController;
     
@@ -25,7 +26,7 @@ public class EntryPoint : nadena.dev.ndmf.proto.rpc.ResoPuppeteer.ResoPuppeteerB
     
     public EntryPoint(EngineController controller, int? autoShutdownTimeout)
     {
-        _engine = controller.Engine;
+        _engine = controller;
         _world = controller.World;
         _tickController = controller.TickController;
         _autoShutdownTimeout = autoShutdownTimeout != null ? TimeSpan.FromSeconds(autoShutdownTimeout.Value) : null;

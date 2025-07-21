@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Remoting;
 using Assimp.Unmanaged;
+using nadena.dev.resonity.engine;
 using nadena.dev.resonity.remote.puppeteer.rpc;
 
 [assembly: InternalsVisibleTo("Launcher")]

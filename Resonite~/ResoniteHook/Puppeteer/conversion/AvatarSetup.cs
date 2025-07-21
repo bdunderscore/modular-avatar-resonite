@@ -238,7 +238,7 @@ public partial class RootConverter
         
         // Create core systems node
         var coreSys = _root.AddSlot("Core Systems");
-        var task = coreSys.LoadObjectAsync(new Uri(CloudSpawnAssets.CoreSystems));
+        var task = _context.Gadgets.CoreSystems.Spawn(coreSys);
         
         var settingsField = _settingsRoot.AttachComponent<f.ReferenceField<f.Slot>>();
         settingsField.Reference.Target = _settingsRoot;

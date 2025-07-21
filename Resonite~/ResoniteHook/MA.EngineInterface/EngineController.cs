@@ -1,10 +1,13 @@
-﻿using System.Reflection;
+﻿#nullable enable
+
+using System.Reflection;
 using System.Runtime.InteropServices;
 using Assimp.Unmanaged;
 using FrooxEngine;
+using nadena.dev.resonity.gadgets;
 using SkyFrost.Base;
 
-namespace nadena.dev.resonity.remote.puppeteer;
+namespace nadena.dev.resonity.engine;
 
 public class EngineController : IAsyncDisposable
 {
@@ -18,13 +21,17 @@ public class EngineController : IAsyncDisposable
     
     private bool _wantShutdown;
     
-    private Engine _engine;
-    private TickController _tickController;
-    private World _world;
+    private Engine? _engine;
+    private TickController? _tickController;
+    private World? _world;
 
-    public TickController TickController => _tickController;
-    public Engine Engine => _engine;
-    public World World => _world;
+    public TickController TickController => _tickController ?? throw new Exception("TickController is not initialized. Did you call Start()?");
+    public Engine Engine => _engine ?? throw new Exception("Engine is not initialized. Did you call Start()?");
+    public World World => _world ?? throw new Exception("World is not initialized. Did you call Start()?");
+
+    private GadgetLibrary _gadgetLibrary;
+
+    public GadgetLibrary GadgetLibrary => _gadgetLibrary ??= new GadgetLibrary(Engine);
     
     public EngineController(string? ResoniteDirectory = null)
     {

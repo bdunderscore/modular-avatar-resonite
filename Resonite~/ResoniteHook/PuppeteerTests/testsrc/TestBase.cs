@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Runtime.InteropServices;
 using FrooxEngine;
+using nadena.dev.resonity.engine;
 using nadena.dev.resonity.remote.bootstrap;
 using NUnit.Framework;
 

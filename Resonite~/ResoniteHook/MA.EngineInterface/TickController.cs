@@ -1,6 +1,6 @@
 using Elements.Core;
 
-namespace nadena.dev.resonity.remote.puppeteer;
+namespace nadena.dev.resonity.engine;
 
 public class TickController
 {

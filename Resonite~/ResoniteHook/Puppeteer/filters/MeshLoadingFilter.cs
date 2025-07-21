@@ -79,11 +79,7 @@ public class MeshLoadingFilter(TranslateContext context)
     {
         var slot = parent.AddSlot("LoadingSpinner");
 
-        bool result = await slot.LoadObjectAsync(new Uri(CloudSpawnAssets.LoadingDisplay));
-        if (!result)
-        {
-            LogController.Log(LogController.LogLevel.Warning, "Failed to load loading display");
-        }
+        await context.Gadgets.LoadingStandin.Spawn(slot);
         
         slot.LocalRotation = floatQ.Identity;
         slot.LocalScale = float3.One;

@@ -4,10 +4,7 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <OutputType>Exe</OutputType>
-    </PropertyGroup>
-    <PropertyGroup Label="License">
-        <IsDeploymentTarget>true</IsDeploymentTarget>
+        <RootNamespace>nadena.dev.resonity.gadgets</RootNamespace>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -91,50 +88,14 @@
             <HintPath>$(ResoniteDir)/Resonite_Data/Managed/SkyFrost.Base.Models.dll</HintPath>
         </Reference>
     </ItemGroup>
-
     <ItemGroup>
-        <PackageReference Include="Google.Protobuf" Version="3.30.1" />
-        <PackageReference Include="Google.Protobuf.Tools" Version="3.30.1">
-            <PrivateAssets>all</PrivateAssets>
-            <Private>false</Private>
-        </PackageReference>
-        <PackageReference Include="Grpc.AspNetCore.Server" Version="2.70.0" />
-        <PackageReference Include="Grpc.Tools" Version="2.71.0">
-            <PrivateAssets>all</PrivateAssets>
-            <Private>false</Private>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="GrpcDotNetNamedPipes" Version="3.1.0" />
-        <PackageReference Include="JetBrains.Annotations" Version="2025.1.0-eap1" />
+      <Folder Include="resources\" />
     </ItemGroup>
-
     <ItemGroup>
-        <Protobuf Include="../ResoPuppetSchema/proto/*.proto" LinkBase="proto" ProtoRoot="../ResoPuppetSchema" AdditionalImportDirs="$(PkgGoogle_Protobuf_Tools)/tools" GrpcServices="Server" />
-        <Protobuf Update="../ResoPuppetSchema/proto/dynamics.proto">
-            <Link>proto/dynamics.proto</Link>
-        </Protobuf>
-        <Protobuf Update="..\ResoPuppetSchema\proto\logger.proto">
-          <Link>proto\logger.proto</Link>
-        </Protobuf>
+      <None Remove="resources\loading_standin.resonitepackage" />
+      <EmbeddedResource Include="resources\loading_standin.resonitepackage" />
+      <None Remove="resources\coresys.resonitepackage" />
+      <EmbeddedResource Include="resources\coresys.resonitepackage" />
     </ItemGroup>
-
-    <ItemGroup>
-        <Folder Include="../ResoPuppetSchema/">
-            <Link>ResoPuppetSchema</Link>
-        </Folder>
-        <Folder Include="obj/Debug/" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\MA.EngineInterface\MA.EngineInterface.csproj" />
-      <ProjectReference Include="..\PuppeteerCommon\PuppeteerCommon.csproj" />
-    </ItemGroup>
-
-    <PropertyGroup>
-        <OutDir>bin</OutDir>
-        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-        <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-        <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
-    </PropertyGroup>
 
 </Project>
