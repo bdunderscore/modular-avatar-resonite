@@ -674,21 +674,36 @@ namespace nadena.dev.ndmf.platform.resonite
             msgMesh.Uvs.Add(uv0);
 
             var smc = mesh.subMeshCount;
-            var indexBuf = mesh.triangles;
+            var indexBuf = mesh.GetIndexBuffer();
+            uint[] indices = new uint[indexBuf.count];
+            if (indexBuf.stride == 2)
+            {
+                var tmp = new ushort[indexBuf.count];
+                indexBuf.GetData(tmp);
+                for (int i = 0; i < tmp.Length; i++)
+                {
+                    indices[i] = tmp[i];
+                }
+            }
+            else
+            {
+                indexBuf.GetData(indices);
+            }
+            
             for (int i = 0; i < smc; i++)
             {
                 var submesh = new p.mesh.Submesh();
                 var desc = mesh.GetSubMesh(i);
 
                 submesh.Triangles = new();
-
+                
                 for (int v = 0; v < desc.indexCount; v += 3)
                 {
                     var tri = new p.mesh.Triangle()
                     {
-                        V0 = indexBuf[desc.indexStart + v] + desc.baseVertex,
-                        V1 = indexBuf[desc.indexStart + v + 1] + desc.baseVertex,
-                        V2 = indexBuf[desc.indexStart + v + 2] + desc.baseVertex
+                        V0 = (int)(indices[desc.indexStart + v] + desc.baseVertex),
+                        V1 = (int)(indices[desc.indexStart + v + 1] + desc.baseVertex),
+                        V2 = (int)(indices[desc.indexStart + v + 2] + desc.baseVertex)
                     };
                     submesh.Triangles.Triangles.Add(tri);
 

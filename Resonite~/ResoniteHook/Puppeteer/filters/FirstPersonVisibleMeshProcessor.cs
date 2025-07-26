@@ -147,6 +147,11 @@ internal partial class FirstPersonVisibleFilter
                 bool isVisibleElement = true;
                 for (int j = 0; j < indicesPerElement; j++)
                 {
+                    if (readPointer + j >= submesh.RawIndicies.Length || submesh.RawIndicies[readPointer + j] >= isVertexInvisible.Length)
+                    {
+                        throw new IndexOutOfRangeException(
+                            $"Submesh {submeshIndex} has invalid index {submesh.RawIndicies[readPointer + j]} at readPointer {readPointer} and j {j}");
+                    }
                     if (isVertexInvisible[submesh.RawIndicies[readPointer + j]])
                     {
                         isVisibleElement = false;
