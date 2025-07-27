@@ -4,7 +4,7 @@ in TargetSlot: Slot
 in ConstrainedSlot: Slot
 in Weight: float
 
-out AimVec: float3
+out this: float3
 
 where {
     In_TargetSlot = TargetSlot->ObjectRelay;
@@ -16,7 +16,7 @@ where {
     Out_AimVec = Mul_Float3_Float(
         GlobalPointToLocal(Instance=In_ConstrainedSlot->GetParentSlot, GlobalPosition=TargetWorldPos)->Normalized_Float3,
         In_Weight
-    );
+    )->ValueRelay;
 
 
     Out_AimVec;

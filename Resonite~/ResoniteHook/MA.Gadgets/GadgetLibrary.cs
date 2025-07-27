@@ -14,6 +14,7 @@ public class GadgetLibrary(FrooxEngine.Engine engine)
     
     public IGadget AimConstraint => new ProtographGadget(engine, "AimConstraint");
     public IGadget AimSource => new ProtographGadget(engine, "AimSource");
+    public IGadget AimWorldUp => new ProtographGadget(engine, "AimWorldUp");
 }
 
 public class ProtographGadget(Engine engine, string name) : IGadget

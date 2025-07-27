@@ -1,4 +1,4 @@
-module AimConstraintBackend
+module AimConstraint
 
 in Weight: float
 in AimVec: float3
@@ -33,7 +33,6 @@ where {
         GoalUp=In_WorldUpVec->Normalized_Float3
     );
 
-    Result=Slerp_floatQ(From=In_RestRotation, To=AimOrientation, Lerp=In_Weight);
-    Out_Result = Result->ValueRelay;
+    Out_Result = Slerp_floatQ(From=In_RestRotation, To=AimOrientation, Lerp=In_Weight)->ValueRelay<floatQ>;
     Out_Result;
 }

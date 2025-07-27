@@ -30,13 +30,14 @@
         <Message Importance="high" Text="Protograph files: @(ProtographSources) from $(MSBuildProjectDirectory)/protograph/**/*.pg" />
     </Target>
     
-    <Target Name="BuildProtograph" BeforeTargets="BeforeBuild" Inputs="@(ProtographSources)" Outputs="@(ProtographSources->'resources/protograph/%(Filename).brson')">
+    <Target Name="BuildProtograph" BeforeTargets="BeforeBuild" Inputs="@(ProtographSources)" Outputs="@(ProtographSources->'resources/protograph/%(Filename).pg.brson')">
         <Message Importance="high" Text="Building Protograph files..." />
         <MakeDir Directories="resources/protograph" />
         <Exec Command="flux-sdk build -d &quot;$(MSBuildProjectDirectory)/protograph&quot; @(ProtographSources -> '&quot;%(Identity)&quot;', ' ')"
               WorkingDirectory="resources/protograph"
               EnvironmentVariables="RESONITE_MANAGED_DATA_PATH=$(ResoniteDir)/Resonite_Data/Managed"
               ContinueOnError="false"
+              LogStandardErrorAsError="true"
         />
 
         <!-- The Protograph compiler does not yet support specifying the output directory --> 
@@ -47,7 +48,7 @@
     </Target>
 
     <ItemGroup>
-        <EmbeddedResource Include="resources/protograph/**/*.brson" />
+        <EmbeddedResource Include="@(ProtographSources->'resources/protograph/%(Filename).pg.brson')" />
     </ItemGroup>
     
     <ItemGroup>
@@ -132,6 +133,9 @@
       <EmbeddedResource Include="resources\loading_standin.resonitepackage" />
       <None Remove="resources\coresys.resonitepackage" />
       <EmbeddedResource Include="resources\coresys.resonitepackage" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="resources\protograph\" />
     </ItemGroup>
 
 </Project>

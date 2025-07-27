@@ -1,0 +1,17 @@
+module AimWorldUp
+
+in RefObject: Slot
+in WorldUpDirection: float3
+
+out this: float3
+
+where {
+    In_RefObject = RefObject->ObjectRelay;
+    In_WorldUpDirection = WorldUpDirection->ValueRelay;
+
+    RelUp = LocalVectorToGlobal(Instance=In_RefObject, LocalVector=In_WorldUpDirection);
+
+    Out_WorldUp = ((In_RefObject->NotNull) ? RelUp : In_WorldUpDirection)->ValueRelay;
+
+    Out_WorldUp;
+}

@@ -144,6 +144,21 @@ public partial class RootConverter
         return null;
     }
 
+    private async Task<INodeValueOutput<float3>> BuildWorldUpSource(IFluxGroup horizontal, p.Constraint constraint)
+    {
+        var inputs = horizontal.Vertical();
+        var refObject = inputs.ElementSource<f.Slot>(out var globalRef, "WorldUpObj");
+        Defer(PHASE_RESOLVE_REFERENCES, "Resolve world up source references",
+            () => globalRef.Reference.Target = Object<f.Slot>(constraint.RollConfiguration.ReferenceObject)!);
+        var upDirection = inputs.ValueInput((float3)constraint.RollConfiguration.WorldUpDirection.Vec3());
+        
+        var worldUpSourceLogic = await horizontal.Gadget(_context.Gadgets.AimWorldUp);
+        worldUpSourceLogic.ObjectRelay<f.Slot>("In_RefObject").Input.Target = refObject;
+        worldUpSourceLogic.ValueRelay<float3>("In_WorldUpDirection").Input.Target = upDirection;
+        
+        return worldUpSourceLogic.ValueOutput<float3>("Out_WorldUp");
+    }
+
     private async Task<INodeValueOutput<float3>> BuildAimConstraintSource(IFluxGroup horizontal, p.Constraint constraint, p.ConstraintSource source, INodeObjectOutput<Slot>? constraintSlot)
     {
         var inputs = horizontal.Vertical();
@@ -159,7 +174,7 @@ public partial class RootConverter
         sourceLogic.ObjectRelay<Slot>("In_ConstrainedSlot").Input.Target = constraintSlot;
         sourceLogic.ValueRelay<float>("In_Weight").Input.Target = weight;
 
-        return sourceLogic.ValueRelay<float3>("Out_AimVec");
+        return sourceLogic.ValueOutput<float3>("Out_AimVec");
     }
 
     private async Task<INodeValueOutput<floatQ>> BuildAimConstraint(
@@ -199,10 +214,11 @@ public partial class RootConverter
         var weight = vert.ValueInput(constraint.Weight);
         
         // TODO
-        var worldUpVec = vert.ValueInput(new float3(0, 1, 0));
+        var worldUpVec = await BuildWorldUpSource(vert.Horizontal(), constraint);
 
         var aimVec = vert.ValueInput(new float3(0, 0, 1));
-        var upVec = vert.ValueInput(new float3(0, 1, 0));
+        var localUpDirection =  (float3?)constraint.RollConfiguration.LocalUpDirection?.Vec3() ?? new float3(0, 1, 0);
+        var upVec = vert.ValueInput(localUpDirection);
 
         var constraintLogic = await root.Gadget(_context.Gadgets.AimConstraint);
         constraintLogic.ValueRelay<float>("In_Weight").Input.Target = weight;
@@ -215,57 +231,7 @@ public partial class RootConverter
         constraintLogic.ValueRelay<floatQ>("In_RestRotation").Input.Target = restRotation;
         constraintLogic.ValueRelay<floatQ>("In_OffsetRotation").Input.Target = offsetRotation;
 
-        return constraintLogic.ValueRelay<floatQ>("Out_Result");
-    }
-
-    private INodeValueOutput<float3x3> ComputeAimOrthonormalSpace(IFluxGroup flux, INodeValueOutput<float3> aimVector, INodeValueOutput<float3> upVector)
-    {
-        var normalize = flux.Vertical();
-        
-        var aim = normalize.Spawn<Normalized_Float3>();
-        aim.A.Target = aimVector;
-
-        var up = normalize.Spawn<Normalized_Float3>();
-        up.A.Target = upVector;
-        
-        var outerGroup = flux.Vertical();
-        var upPrep = outerGroup.Horizontal();
-        var rightPrep = outerGroup.Horizontal();
-
-        
-        // Compute the orthonormal basis for the aim vector and up vector.
-        
-        // Project the up vector onto the plane defined by the aim vector
-        var upDot = upPrep.Spawn<Dot_Float3>();
-        upDot.A.Target = aim;
-        upDot.B.Target = up;
-        
-        var upProj = upPrep.Spawn<Mul_Float3_Float>();
-        upProj.A.Target = up;
-        upProj.B.Target = upDot;
-        
-        var upPerp = upPrep.Spawn<ValueSub<float3>>();
-        upPerp.A.Target = up;
-        upPerp.B.Target = upProj;
-        
-        // Normalize the computed up vector
-        var upNorm = upPrep.Spawn<Normalized_Float3>();
-        upNorm.A.Target = upPerp;
-        up = upNorm;
-        
-        // TODO: fallback if the up vector is parallel to the aim vector (e.g. use a default up vector)
-        
-        // Compute the right vector as the cross product of the aim and up vectors
-        var right = rightPrep.Spawn<Cross_Float3>();
-        right.A.Target = up;
-        right.B.Target = aim;
-
-        var packed = flux.Spawn<PackColumns_Float3x3>();
-        packed.Column2.Target = aim;   // Z
-        packed.Column1.Target = up;    // Y
-        packed.Column0.Target = right; // X
-
-        return packed;
+        return constraintLogic.ValueOutput<floatQ>("Out_Result");
     }
 
     /// <summary>
