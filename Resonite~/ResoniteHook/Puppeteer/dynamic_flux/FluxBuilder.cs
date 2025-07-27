@@ -34,6 +34,8 @@ public class FluxBuilder : IAsyncDisposable, IFluxGroup
         }
     }
 
+    public Slot SpawnSlot(string slotName = "Slot") => _root.SpawnSlot(slotName);
+    
     public IFluxGroup Horizontal(string groupName = "Horizontal") => _root.Horizontal(groupName);
     public IFluxGroup Vertical(string groupName = "Vertical") => _root.Vertical(groupName);
     public T Spawn<T>(string? slotName = null) where T : ProtoFluxNode, new() => _root.Spawn<T>(slotName);

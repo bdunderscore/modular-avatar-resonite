@@ -18,7 +18,16 @@ internal class FluxGroup : IFluxGroup
         _slot = slot;
         _isVertical = isVertical;
     }
-    
+
+    public Slot SpawnSlot(string slotName = "Slot")
+    {
+        var index = _slot.ChildrenCount;
+        var slot = _slot.AddSlot(slotName);
+        slot.OrderOffset = index;
+
+        return slot;
+    } 
+
     public T Spawn<T>(string? slotName = null) where T : ProtoFluxNode, new()
     {
         slotName ??= typeof(T).ToString();

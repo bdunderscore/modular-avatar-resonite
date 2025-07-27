@@ -1,0 +1,23 @@
+module AimSource
+
+in TargetSlot: Slot
+in ConstrainedSlot: Slot
+in Weight: float
+
+out AimVec: float3
+
+where {
+    In_TargetSlot = TargetSlot->ObjectRelay;
+    In_ConstrainedSlot = ConstrainedSlot->ObjectRelay;
+    In_Weight = Weight->ValueRelay;
+
+    // Convert to local space
+    TargetWorldPos = In_TargetSlot->GlobalTransform.GlobalPosition;
+    Out_AimVec = Mul_Float3_Float(
+        GlobalPointToLocal(Instance=In_ConstrainedSlot->GetParentSlot, GlobalPosition=TargetWorldPos)->Normalized_Float3,
+        In_Weight
+    );
+
+
+    Out_AimVec;
+}

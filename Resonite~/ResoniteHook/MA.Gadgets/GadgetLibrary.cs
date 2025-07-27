@@ -13,6 +13,7 @@ public class GadgetLibrary(FrooxEngine.Engine engine)
     public IGadget CoreSystems => new ResonitePackageGadget(engine, "coresys");
     
     public IGadget AimConstraint => new ProtographGadget(engine, "AimConstraint");
+    public IGadget AimSource => new ProtographGadget(engine, "AimSource");
 }
 
 public class ProtographGadget(Engine engine, string name) : IGadget

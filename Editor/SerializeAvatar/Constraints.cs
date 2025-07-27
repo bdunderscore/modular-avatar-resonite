@@ -34,25 +34,35 @@ namespace nadena.dev.ndmf.platform.resonite
                 case AimConstraint.WorldUpType.SceneUp:
                     constraint.RollConfiguration = new()
                     {
-                        UpDirection = up.ToRPC()
+                        LocalUpDirection = aim.upVector.ToRPC(),
+                        WorldUpDirection = up.ToRPC(),
                     };
                     break;
                 case AimConstraint.WorldUpType.Vector:
                     constraint.RollConfiguration = new()
                     {
-                        UpDirection = aim.upVector.ToRPC()
+                        LocalUpDirection = aim.upVector.ToRPC(),
+                        WorldUpDirection = aim.worldUpVector.ToRPC()
                     };
                     break;
                 case AimConstraint.WorldUpType.ObjectRotationUp:
                     constraint.RollConfiguration = new()
                     {
+                        LocalUpDirection = aim.upVector.ToRPC(),
                         ReferenceObject = MapObject(aim.gameObject),
-                        UpDirection = aim.upVector.ToRPC()
+                        WorldUpDirection = aim.worldUpVector.ToRPC()
                     };
                     break;
-                // TODO: ObjectUp
-                
+                case AimConstraint.WorldUpType.ObjectUp:
+                    constraint.RollConfiguration = new()
+                    {
+                        LocalUpDirection = aim.upVector.ToRPC(),
+                        ReferenceObject = MapObject(aim.gameObject),
+                        WorldUpDirection = up.ToRPC()
+                    };
+                    break;
                 case AimConstraint.WorldUpType.None:
+                    // TODO - how to handle this?
                 default:
                     break;
             }

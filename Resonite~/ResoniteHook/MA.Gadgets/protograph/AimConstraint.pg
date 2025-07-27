@@ -18,20 +18,22 @@ out this: floatQ
 use CalculateAim
 
 where {
-    Weight = Weight->ValueRelay;
-    AimVec = AimVec->ValueRelay->Normalized_Float3;
-    UpVec = UpVec->ValueRelay->Normalized_Float3;
-    WorldUpVec = WorldUpVec->ValueRelay->Normalized_Float3;
-    TargetVec = TargetVec->ValueRelay->Normalized_Float3;
-    RestRotation = RestRotation->ValueRelay;
-    OffsetRotation = OffsetRotation->ValueRelay;
+    In_Weight = Weight->ValueRelay;
+    In_AimVec = AimVec->ValueRelay;
+    In_UpVec = UpVec->ValueRelay;
+    In_WorldUpVec = WorldUpVec->ValueRelay;
+    In_TargetVec = TargetVec->ValueRelay;
+    In_RestRotation = RestRotation->ValueRelay;
+    In_OffsetRotation = OffsetRotation->ValueRelay;
 
     AimOrientation = CalculateAim(
-        OriginFwd=AimVec,
-        OriginUp=UpVec,
-        GoalFwd=TargetVec,
-        GoalUp=WorldUpVec
+        OriginFwd=In_AimVec->Normalized_Float3,
+        OriginUp=In_UpVec->Normalized_Float3,
+        GoalFwd=In_TargetVec->Normalized_Float3,
+        GoalUp=In_WorldUpVec->Normalized_Float3
     );
 
-    Slerp_floatQ(From=RestRotation, To=AimOrientation, Lerp=Weight);
+    Result=Slerp_floatQ(From=In_RestRotation, To=AimOrientation, Lerp=In_Weight);
+    Out_Result = Result->ValueRelay;
+    Out_Result;
 }

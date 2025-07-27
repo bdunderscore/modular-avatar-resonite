@@ -95,36 +95,18 @@ public partial class RootConverter
         
         var constraintRef = setupVertical.ElementSource<f.Slot>(out var constraintRefRef, "Constraint");
         constraintRefRef.Reference.Target = parent;
-            
-        var getParent = setupVertical.Spawn<GetParentSlot>();
-        getParent.Instance.Target = constraintRef;
-        constraintSlotParent = getParent;
-        
-        
-        if (!constraint.LocalSpace)
-        {
-            var globalTransform = setupVertical.Spawn<GlobalTransform>();
-            globalTransform.Instance.Target = constraintSlotParent;
-            
-            var globalPointToLocal = root.Spawn<GlobalPointToLocal>();
-            globalPointToLocal.Instance.Target = constraintSlotParent;
-            globalPointToLocal.GlobalPoint.Target = globalTransform.GlobalPosition;
-            
-            constraintParentPos = globalPointToLocal;
-        }
 
         var sourceGroup = rootScope.Vertical("Sources");
-        if (doPosition || doAim)
+        if (doAim)
         {
             foreach (var source in constraint.Sources)
             {
-                posSources.Add(BuildPositionConstraintSource(
+                posSources.Add(await BuildAimConstraintSource(
                     sourceGroup.Horizontal("PosSource"),
                     constraint,
                     source, 
-                    constraintSlotParent, 
-                    constraintParentPos)
-                );
+                    constraintRef
+                ));
             }
         }
 
@@ -132,7 +114,7 @@ public partial class RootConverter
         
         if (doAim)
         {
-            rotationOutput = BuildAimConstraint(
+            rotationOutput = await BuildAimConstraint(
                 root,
                 parent,
                 constraint,
@@ -141,8 +123,7 @@ public partial class RootConverter
         }
 
         var outputInputs = root.Vertical();
-        var outputGroup = root.Vertical();
-        
+
         if (rotationOutput != null)
         {
             var rotOutput = root.Horizontal();
@@ -163,7 +144,25 @@ public partial class RootConverter
         return null;
     }
 
-    private INodeValueOutput<floatQ> BuildAimConstraint(
+    private async Task<INodeValueOutput<float3>> BuildAimConstraintSource(IFluxGroup horizontal, p.Constraint constraint, p.ConstraintSource source, INodeObjectOutput<Slot>? constraintSlot)
+    {
+        var inputs = horizontal.Vertical();
+        
+        var sourceSlot = inputs.ElementSource<f.Slot>(out var globalRef);
+        Defer(PHASE_RESOLVE_REFERENCES, "Resolve constraint source references",
+            () => globalRef.Reference.Target = Object<f.Slot>(source.Transform)!);
+
+        var weight = inputs.ValueInput(constraint.Weight);
+
+        var sourceLogic = await horizontal.Gadget(_context.Gadgets.AimSource);
+        sourceLogic.ObjectRelay<Slot>("In_TargetSlot").Input.Target = sourceSlot;
+        sourceLogic.ObjectRelay<Slot>("In_ConstrainedSlot").Input.Target = constraintSlot;
+        sourceLogic.ValueRelay<float>("In_Weight").Input.Target = weight;
+
+        return sourceLogic.ValueRelay<float3>("Out_AimVec");
+    }
+
+    private async Task<INodeValueOutput<floatQ>> BuildAimConstraint(
         IFluxGroup root,
         Slot constrainedObject, 
         p.Constraint constraint,
@@ -176,129 +175,47 @@ public partial class RootConverter
             totalWeight = 1.0f; // Avoid division by zero
         }
         
-        // Compute the effective target points
-        var scaling = root.Vertical();
-        var adders = root.Vertical();
-        
-        var targetMultiAdd = adders.Spawn<ValueAddMulti<float3>>();
-        var weightMultiAdd = adders.Spawn<ValueAddMulti<float>>();
-        
-        foreach ((var targetPoint, var config) in posSources.Zip(constraint.Sources))
+        // Merge position sources
+        var vert = root.Vertical("AimConstraintInputs");
+        INodeValueOutput<float3> mergedPos;
+
+        if (posSources.Count == 1)
         {
-            var horz = scaling.Horizontal();
-
-            var staging = horz.Vertical();
-            
-            var relay = staging.Spawn<ValueRelay<float3>>();
-            relay.Input.Target = targetPoint;
-            var factor = staging.ValueInput(config.Weight);
-            
-            var mul = horz.Spawn<Mul_Float3_Float>();
-            mul.A.Target = relay;
-            mul.B.Target = factor;
-
-            targetMultiAdd.Inputs.Add(mul);
-            weightMultiAdd.Inputs.Add(factor);
+            mergedPos = posSources[0];
         }
-
-        var flux = root.Vertical();
-        
-        var valueDiv = flux.Spawn<Div_Float3_Float>();
-        valueDiv.A.Target = targetMultiAdd;
-        valueDiv.B.Target = weightMultiAdd;
-        
-        var self = flux.ElementSource<f.Slot>(out var selfRef, "SelfObject");
-        selfRef.Reference.Target = constrainedObject;
-        
-        var parent = flux.Spawn<GetParentSlot>();
-        parent.Instance.Target = self;
-        
-        // Compute aim vector.
-        INodeValueOutput<float3> aimVector = valueDiv;
-        if (!constraint.LocalSpace)
+        else
         {
-            flux = root.Vertical();
-            
-            // Move aim target to parent local space, and subtract the local position of the constrained object
-            var globalPointToLocal = flux.Spawn<GlobalPointToLocal>();
-            globalPointToLocal.Instance.Target = parent;
-            globalPointToLocal.GlobalPoint.Target = valueDiv;
-            
-            var localTransform = flux.Spawn<LocalTransform>();
-            localTransform.Instance.Target = self;
-            
-            flux = root.Vertical();
-            var valueSub = flux.Spawn<ValueSub<float3>>();
-            valueSub.A.Target = globalPointToLocal;
-            valueSub.B.Target = localTransform.LocalPosition;
-            
-            aimVector = valueSub;
-        }
-        
-        // TODO: Support aim constraints with no up vector
-        INodeValueOutput<float3>? upVector = null;
-        var rollConfiguration = constraint.RollConfiguration;
-        if (rollConfiguration != null)
-        {
-            var inputs = root.Vertical();
-            upVector = inputs.ValueInput<float3>(rollConfiguration.WorldUpDirection?.Vec3() ?? float3.Up);
-
-            if (rollConfiguration.ReferenceObject != null)
+            var multiAdd = vert.Spawn<ValueAddMulti<float3>>();
+            foreach (var source in posSources)
             {
-                var refObject = inputs.ElementSource<f.Slot>(out var refObjectRef, "ReferenceObject");
-                Defer(PHASE_RESOLVE_REFERENCES, "Resolve reference object for aim constraint",
-                    () => refObjectRef.Reference.Target = Object<f.Slot>(rollConfiguration.ReferenceObject)!);
-                
-                var selfObject = inputs.ElementSource<f.Slot>(out var selfObjectRef, "SelfObject");
-                selfObjectRef.Reference.Target = constrainedObject;
-                
-                var getParent = flux.Spawn<GetParentSlot>();
-                getParent.Instance.Target = selfObject;
-
-                flux = root.Vertical();
-                
-                var globalUp = flux.Spawn<LocalVectorToGlobal>();
-                globalUp.Instance.Target = refObject;
-                globalUp.LocalVector.Target = upVector;
-
-                flux = root.Vertical();
-
-                var localUp = flux.Spawn<GlobalVectorToLocal>();
-                localUp.Instance.Target = getParent;
-                localUp.GlobalVector.Target = globalUp;
-                
-                upVector = localUp;
+                multiAdd.Inputs.Add(source);
             }
+
+            mergedPos = multiAdd;
         }
 
-        var relays = root.Vertical();
-        aimVector = relays.Relay(aimVector);
-        upVector = upVector != null ? relays.Relay(upVector) : relays.ValueInput<float3>(float3.Up);
-
-        var originAimVector = relays.ValueInput<float3>(constraint.AimVector.Vec3());
-        var originUpVector = relays.ValueInput<float3>(
-            constraint.RollConfiguration?.LocalUpDirection?.Vec3() ?? float3.Up
-        );
+        var restRotation = vert.ValueInput(constraint.RotationAtRest.Quat());
+        var offsetRotation = vert.ValueInput(constraint.RotationOffset.Quat());
+        var weight = vert.ValueInput(constraint.Weight);
         
-        // Compute the rotation quaternion by computing the original and target orthonormal bases directly.
-        flux = root.Vertical();
-        var goalSpace = ComputeAimOrthonormalSpace(flux.Horizontal(), aimVector, upVector);
+        // TODO
+        var worldUpVec = vert.ValueInput(new float3(0, 1, 0));
 
-        var originSpace = ComputeAimOrthonormalSpace(flux.Horizontal(), originAimVector, originUpVector);
+        var aimVec = vert.ValueInput(new float3(0, 0, 1));
+        var upVec = vert.ValueInput(new float3(0, 1, 0));
 
-        flux = root.Vertical();
-        goalSpace = flux.Relay(goalSpace);
-        var transpose = flux.Spawn<Transpose_Float3x3>();
-        transpose.A.Target = originSpace;
+        var constraintLogic = await root.Gadget(_context.Gadgets.AimConstraint);
+        constraintLogic.ValueRelay<float>("In_Weight").Input.Target = weight;
+        constraintLogic.ValueRelay<float3>("In_AimVec").Input.Target = aimVec;
+        constraintLogic.ValueRelay<float3>("In_UpVec").Input.Target = upVec;
+
+        constraintLogic.ValueRelay<float3>("In_WorldUpVec").Input.Target = worldUpVec;
+        constraintLogic.ValueRelay<float3>("In_TargetVec").Input.Target = mergedPos;
         
-        var rotationMul = flux.Spawn<ValueMul<float3x3>>();
-        rotationMul.A.Target = goalSpace;
-        rotationMul.B.Target = transpose;
+        constraintLogic.ValueRelay<floatQ>("In_RestRotation").Input.Target = restRotation;
+        constraintLogic.ValueRelay<floatQ>("In_OffsetRotation").Input.Target = offsetRotation;
 
-        var rotation = flux.Spawn<Decomposed_Rotation_Float3x3>();
-        rotation.A.Target = rotationMul;
-
-        return rotation;
+        return constraintLogic.ValueRelay<floatQ>("Out_Result");
     }
 
     private INodeValueOutput<float3x3> ComputeAimOrthonormalSpace(IFluxGroup flux, INodeValueOutput<float3> aimVector, INodeValueOutput<float3> upVector)
