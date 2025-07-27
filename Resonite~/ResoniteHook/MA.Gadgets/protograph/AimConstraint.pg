@@ -1,0 +1,37 @@
+module AimConstraintBackend
+
+in Weight: float
+in AimVec: float3
+in UpVec: float3
+
+// From one of the AimWorldUp_X modules
+in WorldUpVec: float3
+in TargetVec: float3
+
+in RestRotation: floatQ
+in OffsetRotation: floatQ
+
+// TODO: Axis lock
+
+out this: floatQ
+
+use CalculateAim
+
+where {
+    Weight = Weight->ValueRelay;
+    AimVec = AimVec->ValueRelay->Normalized_Float3;
+    UpVec = UpVec->ValueRelay->Normalized_Float3;
+    WorldUpVec = WorldUpVec->ValueRelay->Normalized_Float3;
+    TargetVec = TargetVec->ValueRelay->Normalized_Float3;
+    RestRotation = RestRotation->ValueRelay;
+    OffsetRotation = OffsetRotation->ValueRelay;
+
+    AimOrientation = CalculateAim(
+        OriginFwd=AimVec,
+        OriginUp=UpVec,
+        GoalFwd=TargetVec,
+        GoalUp=WorldUpVec
+    );
+
+    Slerp_floatQ(From=RestRotation, To=AimOrientation, Lerp=Weight);
+}

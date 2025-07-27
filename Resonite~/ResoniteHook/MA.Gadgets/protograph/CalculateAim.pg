@@ -1,0 +1,40 @@
+module CalculateAim
+
+// Target up direction
+in GoalUp: float3
+// Target aim direction
+in GoalFwd: float3
+
+// Axis to point upwards
+in OriginUp: float3
+// Axis to aim at the target
+in OriginFwd: float3
+
+// Computed orientation
+out this: floatQ
+
+where {
+    OriginUp = OriginUp->ValueRelay->Normalized_Float3;
+    OriginFwd = OriginFwd->ValueRelay->Normalized_Float3;
+    GoalUp = GoalUp->ValueRelay->Normalized_Float3;
+    GoalFwd = GoalFwd->ValueRelay->Normalized_Float3;
+    
+
+    // Compute orthonormal basis we want to transform into
+
+    // Make up direction perpendicular to the target direction
+    OrthoY = (GoalUp - Mul_Float3_Float(A=GoalFwd, B=Dot_Float3(A=GoalUp, B=GoalFwd)))->Normalized_Float3;
+    OrthoZ = GoalFwd;
+    OrthoX = Cross_Float3(A=OrthoY, B=OrthoZ);
+
+    TargetOrientation = PackColumns_Float3x3(Column0=OrthoX, Column1=OrthoY, Column2=OrthoZ);
+
+    // Compute original orthonormal basis, based on the aim axis
+    AimZ = OriginFwd;
+    AimY = (OriginUp - Mul_Float3_Float(A=AimZ, B=Dot_Float3(A=OriginUp, B=AimZ)))->Normalized_Float3;
+    AimX = Cross_Float3(A=AimY, B=AimZ);
+
+    SourceOrientation = PackColumns_Float3x3(Column0=AimX, Column1=AimY, Column2=AimZ)->Transpose_Float3x3;
+
+    (TargetOrientation * SourceOrientation)->Decomposed_Rotation_Float3x3;
+}
