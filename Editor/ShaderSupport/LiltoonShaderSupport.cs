@@ -51,7 +51,14 @@ namespace nadena.dev.ndmf.platform.resonite
             }
 
             protoMat.Metallic = metallic.floatValue;
-            protoMat.Smoothness = smoothness.floatValue;
+            if (material.GetFloat("_Reflection") == 0)
+            {
+                protoMat.Smoothness = 0;
+            }
+            else
+            {
+                protoMat.Smoothness = smoothness.floatValue;
+            }
             protoMat.Reflectivity = reflectance.floatValue;
             
             // Update culling/etc settings based on liltoon config
