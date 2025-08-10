@@ -256,6 +256,7 @@ public partial class RootConverter : IDisposable
         textureComponent.URL.Value = uri;
         textureComponent.IsNormalMap.Value = texture.IsNormalMap;
 
+        /*
         // Initially, we generate asset variants up to a 512x512 size. This ensures that the textures are visible
         // immediately on import, without blowing up the size of the resonitepackage too much. We set the MaxSize back
         // to its final value just before we generate the package and destroy the StaticTexture2D.
@@ -283,6 +284,7 @@ public partial class RootConverter : IDisposable
             }
             textureComponent.MaxSize.Value = texture.HasMaxResolution ? (int) texture.MaxResolution : null;
         });
+        */
 
         return textureComponent;
     }

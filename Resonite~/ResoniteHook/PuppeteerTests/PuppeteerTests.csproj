@@ -31,13 +31,16 @@
     </PropertyGroup>
     <ItemGroup>
         <Reference Include="Elements.Assets">
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/Elements.Assets.dll</HintPath>
+            <HintPath>$(ResoniteDir)/Elements.Assets.dll</HintPath>
         </Reference>
         <Reference Include="Elements.Core">
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/Elements.Core.dll</HintPath>
+            <HintPath>$(ResoniteDir)/Elements.Core.dll</HintPath>
         </Reference>
         <Reference Include="FrooxEngine">
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/FrooxEngine.dll</HintPath>
+            <HintPath>$(ResoniteDir)/FrooxEngine.dll</HintPath>
+        </Reference>
+        <Reference Include="Renderite.Shared">
+            <HintPath>$(ResoniteDir)/Renderite.Shared.dll</HintPath>
         </Reference>
     </ItemGroup>
 

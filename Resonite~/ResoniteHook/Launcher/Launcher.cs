@@ -25,16 +25,25 @@ public class Launcher
     {
         resoniteBase = resonitePath ?? SteamUtils.GetGamePath(2519830) ?? defaultResoniteBase;
 
-        assemblyBase = resoniteBase + "/Resonite_Data/Managed/";
+        assemblyBase = resoniteBase + "/";
 
         dllPaths = new()
         {
             Directory.GetCurrentDirectory() + "/",
             Path.GetDirectoryName(typeof(Launcher).Assembly.Location)!,
             assemblyBase,
-            resoniteBase + "/Resonite_Data/Plugins/x86_64/",
+            //resoniteBase + "/Resonite_Data/Plugins/x86_64/",
             resoniteBase + "/Tools/",
+            resoniteBase + "/Runtimes/win-x64/",
         };
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            dllPaths.Add(resoniteBase + "/Runtimes/win-x64/native/");
+        } else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            dllPaths.Add(resoniteBase + "/Runtimes/linux-x64/native/");
+        }
 
         AppDomain.CurrentDomain.AssemblyLoad += (sender, args) =>
         {

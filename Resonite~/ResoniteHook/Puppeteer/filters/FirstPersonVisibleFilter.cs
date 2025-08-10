@@ -1,6 +1,7 @@
 ﻿using Elements.Core;
 using FrooxEngine;
 using nadena.dev.resonity.remote.puppeteer.rpc;
+using Renderite.Shared;
 
 namespace nadena.dev.resonity.remote.puppeteer.filters;
 

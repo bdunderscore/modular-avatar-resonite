@@ -11,77 +11,77 @@
         <Reference Include="AssimpNet">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/AssimpNet.dll</HintPath>
+            <HintPath>$(ResoniteDir)/AssimpNet.dll</HintPath>
         </Reference>
         <Reference Include="BepuPhysics">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/BepuPhysics.dll</HintPath>
+            <HintPath>$(ResoniteDir)/BepuPhysics.dll</HintPath>
         </Reference>
         <Reference Include="Elements.Assets">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/Elements.Assets.dll</HintPath>
+            <HintPath>$(ResoniteDir)/Elements.Assets.dll</HintPath>
         </Reference>
         <Reference Include="Elements.Core">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/Elements.Core.dll</HintPath>
+            <HintPath>$(ResoniteDir)/Elements.Core.dll</HintPath>
         </Reference>
         <Reference Include="Elements.Quantity">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/Elements.Quantity.dll</HintPath>
+            <HintPath>$(ResoniteDir)/Elements.Quantity.dll</HintPath>
         </Reference>
         <Reference Include="FrooxEngine">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/FrooxEngine.dll</HintPath>
+            <HintPath>$(ResoniteDir)/FrooxEngine.dll</HintPath>
         </Reference>
         <Reference Include="FrooxEngine.Commands">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/FrooxEngine.Commands.dll</HintPath>
+            <HintPath>$(ResoniteDir)/FrooxEngine.Commands.dll</HintPath>
         </Reference>
         <Reference Include="FrooxEngine.Store">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/FrooxEngine.Store.dll</HintPath>
+            <HintPath>$(ResoniteDir)/FrooxEngine.Store.dll</HintPath>
         </Reference>
         <Reference Include="FrooxEngine.Weaver">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/FrooxEngine.Weaver.dll</HintPath>
+            <HintPath>$(ResoniteDir)/FrooxEngine.Weaver.dll</HintPath>
         </Reference>
         <Reference Include="ProtoFlux.Core">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/ProtoFlux.Core.dll</HintPath>
+            <HintPath>$(ResoniteDir)/ProtoFlux.Core.dll</HintPath>
         </Reference>
         <Reference Include="ProtoFlux.Nodes.Core">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/ProtoFlux.Nodes.Core.dll</HintPath>
+            <HintPath>$(ResoniteDir)/ProtoFlux.Nodes.Core.dll</HintPath>
         </Reference>
         <Reference Include="ProtoFlux.Nodes.FrooxEngine">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/ProtoFlux.Nodes.FrooxEngine.dll</HintPath>
+            <HintPath>$(ResoniteDir)/ProtoFlux.Nodes.FrooxEngine.dll</HintPath>
         </Reference>
         <Reference Include="ProtoFluxBindings">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/ProtoFluxBindings.dll</HintPath>
+            <HintPath>$(ResoniteDir)/ProtoFluxBindings.dll</HintPath>
         </Reference>
         <Reference Include="SkyFrost.Base">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/SkyFrost.Base.dll</HintPath>
+            <HintPath>$(ResoniteDir)/SkyFrost.Base.dll</HintPath>
         </Reference>
         <Reference Include="SkyFrost.Base.Models">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
-            <HintPath>$(ResoniteDir)/Resonite_Data/Managed/SkyFrost.Base.Models.dll</HintPath>
+            <HintPath>$(ResoniteDir)/SkyFrost.Base.Models.dll</HintPath>
         </Reference>
     </ItemGroup>
 
