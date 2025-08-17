@@ -9,6 +9,7 @@ using FrooxEngine.Store;
 using Google.Protobuf.Collections;
 using nadena.dev.resonity.remote.puppeteer.filters;
 using nadena.dev.resonity.remote.puppeteer.logging;
+using Renderite.Shared;
 using SkyFrost.Base;
 using Record = SkyFrost.Base.Record;
 
@@ -94,60 +95,103 @@ public partial class RootConverter
         
         Defer(PHASE_RIG_SETUP, "Rig setup", async () =>
         {
-            // Change all bone names to be what BipedRig expects (and any non-humanoid bones become temporary names)
-            // We also need to move any children of humanoid bones in order to avoid breaking FingerPoser configuration
+            // Ensure any field drives are reflected before we start
+            await new f.NextUpdate();
+            
+            var rig = _root.EnsureSingleComponent<Rig>();
+            var bipedRig = _root.EnsureSingleComponent<BipedRig>();
+            var boneNames = RigNaming.GenerateHumanoidBoneNames(avDesc);
 
-            using (var scope = RigNaming.Scope(this, _root, avDesc))
+            var rigBones = new HashSet<f.Slot>();
+            
+            foreach ((var id, _, var node) in boneNames)
             {
-                
-                // Ensure any field drives are reflected before we start
-                await new f.NextUpdate();
-
-                EnsureHumanoidBonesNotDriven(scope.HumanoidBones);
-                
-                // Invoke ModelImporter to set up the rig
-                var settings = new f.ModelImportSettings()
+                var slot = Object<f.Slot>(id);
+                if (slot != null)
                 {
-                    //ForceTpose = true,
-                    SetupIK = true,
-                    GenerateColliders = true,
-                    //GenerateSkeletonBoneVisuals = true,
-                    //GenerateSnappables = true,
-                };
+                    bipedRig[node] = slot;
+                    rigBones.Add(slot);
+                    
+                    // Workaround HandPoser bug by ensuring that humanoid bones sort before nonhumanoid bones
+                    slot.OrderOffset = -1;
+                }
+            }
 
-                Console.WriteLine("Root position: " + parent.Position_Field.Value);
+            // Break drives for any humanoid bones controlled by DynamicBones
+            EnsureHumanoidBonesNotDriven(rigBones);
+            
+            foreach (var slot in bipedRig.Bones)
+            {
+                rig.Bones.Add().Target = slot.Value.Target;
+            }
+            
+            /*
+            Console.WriteLine("=== Biped bone hierarchy ===");
+            Console.WriteLine(bipedRig.GetBipedBoneHiearchy().ToString());
+            */
+            
+            _root.AttachComponent<DestroyRoot>();
+            
+            var vrik = _root.AttachComponent<VRIK>();
+            vrik.Solver.SimulationSpace.Target = _root.Parent;
+            vrik.Solver.OffsetSpace.Target = _root.Parent;
+            vrik.Initiate();
+            vrik.Enabled = false;
 
-                Type ty_modelImportData =
-                    typeof(f.ModelImporter).GetNestedType("ModelImportData", BindingFlags.NonPublic);
-                var mid_ctor = ty_modelImportData.GetConstructors()[0];
-                var modelImportData = mid_ctor.Invoke(new object[]
+            SetupDraggable(bipedRig, vrik.Solver, BodyNode.Head, vrik.Solver.spine.IKPositionHead,
+                vrik.Solver.spine.IKRotationHead, vrik.Solver.spine.PositionWeight);
+            SetupDraggable(bipedRig, vrik.Solver, BodyNode.Hips, vrik.Solver.spine.IKPositionPelvis,
+                vrik.Solver.spine.IKRotationPelvis, vrik.Solver.spine.PelvisPositionWeight);
+            SetupDraggable(bipedRig, vrik.Solver, vrik.Solver.leftArm, BodyNode.LeftHand);
+            SetupDraggable(bipedRig, vrik.Solver, vrik.Solver.rightArm, BodyNode.RightHand);
+            SetupDraggable(bipedRig, vrik.Solver, vrik.Solver.leftLeg, BodyNode.LeftToes, BodyNode.LeftFoot);
+            SetupDraggable(bipedRig, vrik.Solver, vrik.Solver.rightLeg, BodyNode.RightToes, BodyNode.RightFoot);
+            
+            // Invoke ModelImporter to set up the rig colliders
+            var settings = new f.ModelImportSettings()
+            {
+                //ForceTpose = true,
+                SetupIK = false,
+                GenerateColliders = true,
+                //GenerateSkeletonBoneVisuals = true,
+                //GenerateSnappables = true,
+            };
+
+            Console.WriteLine("Root position: " + parent.Position_Field.Value);
+
+            Type ty_modelImportData = typeof(f.ModelImporter)
+                .GetNestedType("ModelImportData", BindingFlags.NonPublic);
+            var mid_ctor = ty_modelImportData.GetConstructors()[0];
+            var modelImportData = mid_ctor.Invoke(new object[]
+            {
+                "",
+                null,
+                parent,
+                _assetRoot,
+                settings,
+                new NullProgress()
+            });
+
+            ty_modelImportData.GetField("settings")!.SetValue(modelImportData, settings);
+
+            BoneNode root = _root.SlotHierarchyToBoneHiearchy(rigBones.Contains);
+            
+            typeof(f.ModelImporter).GetMethod(
+                "GenerateRigBones",
+                BindingFlags.Static | BindingFlags.NonPublic,
+                null,
+                new[]
                 {
-                    "",
-                    null,
-                    parent,
-                    _assetRoot,
-                    settings,
-                    new NullProgress()
-                });
-
-                ty_modelImportData.GetField("settings")!.SetValue(modelImportData, settings);
-
-                typeof(f.ModelImporter).GetMethod(
-                    "GenerateRigBones",
-                    BindingFlags.Static | BindingFlags.NonPublic,
-                    null,
-                    new[]
-                    {
-                        typeof(f.Rig), ty_modelImportData
-                    },
-                    null
-                )!.Invoke(null, [
-                    rig, modelImportData
-                ]);
-
-                // Avoid the rig moving while we're setting up the avatar by disabling IK
-                rig.Slot.GetComponent<VRIK>().Enabled = false;
-            } 
+                    typeof(f.BoneNode),
+                    ty_modelImportData,
+                    typeof(f.Slot),
+                    typeof(f.BipedRig),
+                    typeof(float3?)
+                },
+                null
+            )!.Invoke(null, [
+                root, modelImportData, root.bone, bipedRig, null
+            ]);
         });
         
         Defer(PHASE_ENABLE_RIG, "Enable VRIK", () =>
@@ -156,6 +200,40 @@ public partial class RootConverter
         });
     }
 
+    void SetupDraggable(BipedRig rig, IKSolver solver, BodyNode node, Sync<float3> pos, Sync<floatQ> rotation, Sync<float> weight)
+    {
+        var slot = rig.TryGetBone(node);
+        if (slot == null) return;
+
+        IKDraggableOffset offset = slot.AttachComponent<IKDraggableOffset>();
+        offset.Solver.Target = solver;
+        offset.PositionTarget.Target = pos;
+        offset.RotationTarget.Target = rotation;
+        offset.Weight.Target = weight;
+    }
+
+    void SetupDraggable(BipedRig rig, IKSolver solver, IKSolverVR.Arm arm, params BodyNode[] nodes)
+    {
+        foreach (var node in nodes)
+        {
+            f.Slot slot = rig.TryGetBone(node);
+            if (slot == null) continue;
+            
+            SetupDraggable(rig, solver, node, arm.IKPosition, arm.IKRotation, arm.PositionWeight);
+        }
+    }
+
+    void SetupDraggable(BipedRig rig, IKSolver solver, IKSolverVR.Leg leg, params BodyNode[] nodes)
+    {
+        foreach (var node in nodes)
+        {
+            f.Slot slot = rig.TryGetBone(node);
+            if (slot == null) continue;
+            
+            SetupDraggable(rig, solver, node, leg.IKPosition, leg.IKRotation, leg.PositionWeight);
+        }
+    }
+    
     private async Task<f.IComponent?> SetupAvatar(f.Slot slot, p.AvatarDescriptor spec)
     {
         await SetupRig(slot, spec);
@@ -213,7 +291,11 @@ public partial class RootConverter
     {
         var blendshapes = PreserveBlendshapes();
 
-        await InvokeAvatarBuilder(slot, spec);
+        // Move non-humanoid bones away from the humanoid rig to avoid breaking the HandPoser
+        using (var _ = RigNaming.IsolateHumanoidRigScope(this, _root, spec))
+        {
+            await InvokeAvatarBuilder(slot, spec);
+        }
 
         if (FREEZE_AVATAR) return;
 

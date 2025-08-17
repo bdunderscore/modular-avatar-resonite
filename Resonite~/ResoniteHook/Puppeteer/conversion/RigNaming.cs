@@ -1,83 +1,97 @@
 ﻿using Elements.Core;
 using FrooxEngine;
 using nadena.dev.ndmf.proto;
+using Renderite.Shared;
 using Finger = nadena.dev.ndmf.proto.Finger;
 
 namespace nadena.dev.resonity.remote.puppeteer.rpc;
 
 internal static class RigNaming
 {
-    static List<(ObjectID, string)> GenerateHumanoidBoneNames(AvatarDescriptor desc)
+    public static List<(ObjectID, string, BodyNode)> GenerateHumanoidBoneNames(AvatarDescriptor desc)
     {
         var bones = desc.Bones;
-        List<(ObjectID, string)> names = new();
+        List<(ObjectID, string, BodyNode)> names = new();
 
-        NameBone("hips", bones.Hips);
-        NameBone("spine", bones.Spine);
-        NameBone("chest", bones.Chest);
+        NameBone("hips", bones.Hips, BodyNode.Hips);
+        NameBone("spine", bones.Spine, BodyNode.Spine);
+        NameBone("chest", bones.Chest, BodyNode.Chest);
         // no upper chest
-        NameBone("neck", bones.Neck);
-        NameBone("head", bones.Head);
+        NameBone("neck", bones.Neck, BodyNode.Neck);
+        NameBone("head", bones.Head, BodyNode.Head);
 
-        NameArm("left_", bones.LeftArm);
-        NameArm("right_", bones.RightArm);
+        NameArm("left_", bones.LeftArm, BodyNode.LeftShoulder);
+        NameArm("right_", bones.RightArm, BodyNode.RightShoulder);
         
-        NameLeg("left_", bones.LeftLeg);
-        NameLeg("right_", bones.RightLeg);
+        NameLeg("left_", bones.LeftLeg, BodyNode.LeftUpperLeg);
+        NameLeg("right_", bones.RightLeg, BodyNode.RightUpperLeg);
         
-        NameBone("left_eye", desc.EyelookConfig?.LeftEyeTransform);
-        NameBone("right_eye", desc.EyelookConfig?.RightEyeTransform);
+        NameBone("left_eye", desc.EyelookConfig?.LeftEyeTransform, BodyNode.LeftEye);
+        NameBone("right_eye", desc.EyelookConfig?.RightEyeTransform, BodyNode.RightEye);
 
         return names;
         
-        void NameArm(string prefix, Arm arm)
+        void NameArm(string prefix, Arm arm, BodyNode baseNode)
         {
-            NameBone(prefix + "shoulder", arm.Shoulder);
-            NameBone(prefix + "upper_arm", arm.UpperArm);
-            NameBone(prefix + "lower_arm", arm.LowerArm);
-            NameBone(prefix + "hand", arm.Hand);
+            var offset = (int)baseNode - (int)BodyNode.LeftShoulder;
+            
+            NameBone(prefix + "shoulder", arm.Shoulder, BodyNode.LeftShoulder + offset);
+            NameBone(prefix + "upper_arm", arm.UpperArm, BodyNode.LeftUpperArm + offset);
+            NameBone(prefix + "lower_arm", arm.LowerArm, BodyNode.LeftLowerArm + offset);
+            NameBone(prefix + "hand", arm.Hand, BodyNode.LeftHand + offset);
 
-            NameFinger(prefix, "index", arm.Index);
-            NameFinger(prefix, "middle", arm.Middle);
-            NameFinger(prefix, "ring", arm.Ring);
-            NameFinger(prefix, "pinky", arm.Pinky);
-            NameFinger(prefix, "thumb", arm.Thumb);
+            NameFinger(prefix, "index", arm.Index, baseNode == BodyNode.LeftShoulder, "Index");
+            NameFinger(prefix, "middle", arm.Middle,  baseNode == BodyNode.LeftShoulder, "Middle");
+            NameFinger(prefix, "ring", arm.Ring,  baseNode == BodyNode.LeftShoulder, "Ring");
+            NameFinger(prefix, "pinky", arm.Pinky,  baseNode == BodyNode.LeftShoulder, "Pinky");
+            NameFinger(prefix, "thumb", arm.Thumb,  baseNode == BodyNode.LeftShoulder, "Thumb");
         }
         
-        void NameFinger(string prefix, string fingerName, Finger finger)
+        void NameFinger(string prefix, string fingerName, Finger finger, bool leftChirality, string enumFingerName)
         {
             prefix += "finger_" + fingerName + "_";
+
+            string enumPrefix = leftChirality ? "Left" : "Right";
             
-            NameBone(prefix + "metacarpal", finger.Metacarpal);
-            NameBone(prefix + "proximal", finger.Proximal);
-            NameBone(prefix + "intermediate", finger.Intermediate);
-            NameBone(prefix + "distal", finger.Distal);
-            NameBone(prefix + "tip", finger.Tip);
+            NameBoneStr(prefix + "metacarpal", finger.Metacarpal, enumPrefix + enumFingerName + "Finger_Metacarpal");
+            NameBoneStr(prefix + "proximal", finger.Proximal, enumPrefix + enumFingerName + "Finger_Proximal");
+            NameBoneStr(prefix + "intermediate", finger.Intermediate, enumPrefix + enumFingerName + "Finger_Intermediate");
+            NameBoneStr(prefix + "distal", finger.Distal, enumPrefix + enumFingerName + "Finger_Distal");
+            NameBoneStr(prefix + "tip", finger.Tip, enumPrefix + enumFingerName + "Finger_Tip");
         }
 
-        void NameLeg(string prefix, Leg leg)
+        void NameLeg(string prefix, Leg leg, BodyNode baseNode)
         {
-            NameBone(prefix + "upperleg", leg.UpperLeg);
-            NameBone(prefix + "lowleg", leg.LowerLeg);
-            NameBone(prefix + "foot", leg.Foot);
-            NameBone(prefix + "toe", leg.Toe);
+            var offset = (int)baseNode - (int)BodyNode.LeftUpperLeg;
+            
+            NameBone(prefix + "upperleg", leg.UpperLeg, BodyNode.LeftUpperLeg + offset);
+            NameBone(prefix + "lowleg", leg.LowerLeg, BodyNode.LeftLowerLeg + offset);
+            NameBone(prefix + "foot", leg.Foot, BodyNode.LeftFoot + offset);
+            NameBone(prefix + "toe", leg.Toe, BodyNode.LeftToes + offset);
         }
 
-        void NameBone(string name, ObjectID? id)
+        void NameBone(string name, ObjectID? id, BodyNode node)
         {
-            if (id != null) names.Add((id, name));
+            if (id != null) names.Add((id, name, node));
+        }
+        
+        void NameBoneStr(string name, ObjectID? id, string nodeName)
+        {
+            if (!Enum.TryParse<BodyNode>(nodeName, out var node))
+            {
+                return;
+            }
+            
+            NameBone(name, id, node);
         }
     }
-
-    public static BoneNamingScope Scope(RootConverter converter, Slot root, AvatarDescriptor avDesc)
+    
+    public static HumanoidRigScope IsolateHumanoidRigScope(RootConverter converter, Slot root, AvatarDescriptor avDesc)
     {
         List<Action> revertActions = new();
-
-        VisitSlot(root);
-
         HashSet<Slot> humanoidBones = new();
 
-        foreach (var (id, name) in GenerateHumanoidBoneNames(avDesc))
+        foreach (var (id, name, _) in GenerateHumanoidBoneNames(avDesc))
         {
             var slot = converter.Object<Slot>(id);
             
@@ -122,29 +136,10 @@ internal static class RigNaming
             }
         }
         
-        return new BoneNamingScope(revertActions, humanoidBones);
-
-        void VisitSlot(Slot slot)
-        {
-            var priorName = slot.Name;
-            revertActions.Add(() => { slot.Name = priorName; });
-            
-            var tmpName = "tmp";
-            foreach (char c in slot.Name)
-            {
-                tmpName += "_" + c;
-            }
-
-            slot.Name = tmpName;
-            
-            foreach (var child in slot.Children)
-            {
-                VisitSlot(child);
-            }
-        }
+        return new HumanoidRigScope(revertActions, humanoidBones);
     }
 
-    public class BoneNamingScope(List<Action> actions, HashSet<Slot> humanoidBones) : IDisposable
+    public class HumanoidRigScope(List<Action> actions, HashSet<Slot> humanoidBones) : IDisposable
     {
         public HashSet<Slot> HumanoidBones => humanoidBones;
         
