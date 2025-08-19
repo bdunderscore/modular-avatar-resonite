@@ -24,6 +24,7 @@ public partial class RootConverter
     private const bool FREEZE_AVATAR = false;
 
     private f.Slot? _settingsRoot;
+    private f.Slot? _coreSys;
     
     /// <summary>
     /// Ensures that we don't have any dynamic bone drives or similar things on humanoid bones.
@@ -216,8 +217,6 @@ public partial class RootConverter
 
         if (FREEZE_AVATAR) return;
 
-        CreateSettingsNode();
-        
         // Setup visemes
         var driver = slot.GetComponentInChildren<f.DirectVisemeDriver>();
         driver?.Destroy();
@@ -230,7 +229,7 @@ public partial class RootConverter
         RestoreBlendshapes(blendshapes);
     }
 
-    private f.Slot CreateSettingsNode()
+    private async Task<f.Slot> CreateSettingsNode()
     {
         if (_settingsRoot != null) return _settingsRoot;
         
@@ -238,7 +237,7 @@ public partial class RootConverter
         
         // Create core systems node
         var coreSys = _root.AddSlot("Core Systems");
-        var task = _context.Gadgets.CoreSystems.Spawn(coreSys);
+        _coreSys = await _context.Gadgets.CoreSystems.Spawn(coreSys);
         
         var settingsField = _settingsRoot.AttachComponent<f.ReferenceField<f.Slot>>();
         settingsField.Reference.Target = _settingsRoot;
@@ -247,7 +246,6 @@ public partial class RootConverter
         settingsVar.VariableName.Value = ResoNamespaces.SettingsRoot;
         settingsVar.Reference.DriveFrom(settingsField.Reference);
         
-        Defer(PHASE_AWAIT_CLOUD_SPAWN, "Waiting for cloud spawn...", () => task);
         Defer(PHASE_FINALIZE, "Finalizing avatar settings...", () =>
         {
             _settingsRoot.SetParent(_root, false);

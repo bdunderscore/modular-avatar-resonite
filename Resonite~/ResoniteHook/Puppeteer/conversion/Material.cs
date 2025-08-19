@@ -16,6 +16,8 @@ public partial class RootConverter
     
     private f.IAssetProvider<f.Material> _baseMaterial;
     private HashSet<string> usedMaterialNames = new HashSet<string>();
+
+    private bool createdCommonAfkMaterial = false;
     
     private string AssignMaterialName(p::Asset asset) {
         var name = DeniedDynVarNameChars.Replace(asset.Name, "");
@@ -50,6 +52,11 @@ public partial class RootConverter
         
         var holder = AssetSubslot("Materials", _assetRoot);
 
+        if (!createdCommonAfkMaterial)
+        {
+            CreateCommonAfkMaterial(holder);
+        }
+        
         var matSlot = holder.AddSlot(asset.Name);
 
         IAssetProvider<Material> mat;
@@ -65,12 +72,47 @@ public partial class RootConverter
                 break;
         }
 
-        var dynVar = matSlot.AttachComponent<f.DynamicReferenceVariableDriver<IAssetProvider<f.Material>>>();
         var referenceField = matSlot.AttachComponent<f.ReferenceField<f.IAssetProvider<f.Material>>>();
+        
+        var dvOverrideMaterial = matSlot.AttachComponent<f.DynamicReferenceVariableDriver<IAssetProvider<f.Material>>>();
+        var dvAFKMaterial = matSlot.AttachComponent<f.DynamicReferenceVariableDriver<IAssetProvider<f.Material>>>();
+        var dynVarDriver_isAway = matSlot.AttachComponent<f.DynamicValueVariableDriver<bool>>();
+        var selector = matSlot.AttachComponent<f.BooleanReferenceDriver<f.IAssetProvider<f.Material>>>();
 
-        dynVar.Target.Target = referenceField.Reference;
-        dynVar.VariableName.Value = ResoNamespaces.MaterialNamespace + AssignMaterialName(asset);
-        dynVar.DefaultTarget.Target = mat;
+        selector.TargetReference.Target = referenceField.Reference;
+        dynVarDriver_isAway.Target.Target = selector.State;
+        dynVarDriver_isAway.VariableName.Value = ResoNamespaces.IsAway;
+        dynVarDriver_isAway.DefaultValue.Value = false;
+        
+        var matName = AssignMaterialName(asset);
+        
+        dvAFKMaterial.Target.Target = selector.TrueTarget;
+        dvAFKMaterial.VariableName.Value = ResoNamespaces.AFKMaterialNamespace + matName;
+        
+        dvOverrideMaterial.Target.Target = selector.FalseTarget;
+        dvOverrideMaterial.VariableName.Value = ResoNamespaces.MaterialNamespace + matName;
+        dvOverrideMaterial.DefaultTarget.Target = mat;
+        
+        // If no AFK value is set, fall back to the primary material (so we don't go AFK for this material)
+        dvAFKMaterial.DefaultTarget.DriveFrom(selector.FalseTarget);
+        
+        // Build the AFK config object
+        var afkObj = matSlot.AddSlot("<color=cyan>AFK Config</color>");
+        afkObj.OrderOffset = -1;
+        var commonAfkMatDriver = afkObj.AttachComponent<f.DynamicReferenceVariableDriver<IAssetProvider<f.Material>>>();
+        var afkMatDynVar = afkObj.AttachComponent<f.DynamicReferenceVariable<IAssetProvider<f.Material>>>();
+
+        commonAfkMatDriver.VariableName.Value = ResoNamespaces.SharedAFKMaterial;
+        commonAfkMatDriver.Target.Target = afkMatDynVar.Reference;
+
+        // Disable the AFK binding if there is no shared AFK material
+        var refEqNull = afkObj.AttachComponent<f.ReferenceEqualityDriver<IAssetProvider<f.Material>>>();
+        refEqNull.TargetReference.Target = afkMatDynVar.Reference;
+        
+        var afkBoolDriver = afkObj.AttachComponent<f.BooleanValueDriver<string>>();
+        afkBoolDriver.FalseValue.Value = ResoNamespaces.AFKMaterialNamespace + matName;
+        afkBoolDriver.TargetField.Target = afkMatDynVar.VariableName;
+        refEqNull.Target.Target = afkBoolDriver.State;
         
         return referenceField.Reference;
         
@@ -83,6 +125,51 @@ public partial class RootConverter
         materialComponent.AlbedoColor.Value = material.MainColor?.ColorX() ?? e.colorX.White;
 
         return materialComponent;
+    }
+
+    private void CreateCommonAfkMaterial(Slot holder)
+    {
+        createdCommonAfkMaterial = true;
+        
+        var slot = holder.AddSlot("<color=cyan>AFK Material</color>");
+        slot.OrderOffset = -1;
+        
+        var dynVar = slot.AttachComponent<f.DynamicReferenceVariable<IAssetProvider<f.Material>>>();
+        dynVar.VariableName.Value = ResoNamespaces.SharedAFKMaterial;
+        
+        // A default fresnel material is set up after avatar creation, we'll use that (and clean up all the existing SimpleAwayIndicators).
+        // We need to defer this as SimpleAwayIndicator is created in avatar setup.
+        Defer(PHASE_AVATAR_SETUP + 1, "Configure AFK material", () =>
+        {
+            IAssetProvider<f.Material>? theMaterial = null;
+            
+            foreach (var simpleAwayIndicator in _root.GetComponentsInChildren<f.SimpleAwayIndicator>())
+            {
+                if (simpleAwayIndicator.Slot.IsChildOf(_coreSys!))
+                {
+                    // Avatar setup adds an _extra_ SimpleAwayIndicator, which breaks things. Delete the excess.
+                    // We find this by looking for one which references the root slot's FresnelMaterial.
+                    if (simpleAwayIndicator.AwayMaterial.Target?.Slot == _root)
+                    {
+                        simpleAwayIndicator.Destroy();
+                    }
+                    // Otherwise: The core systems SimpleAwayInidicator needs to stick around as this is the source of
+                    // the away condition flag.
+                    continue;
+                }
+
+                var targetMaterial = simpleAwayIndicator.AwayMaterial.Target;
+                if (targetMaterial != null && targetMaterial != theMaterial && targetMaterial is Component c) {
+                    if (theMaterial == null)
+                    {
+                        theMaterial = (f.IAssetProvider<f.Material>) slot.CopyComponent(c);
+                        dynVar.Reference.Target = theMaterial;
+                    }
+                    c.Destroy();
+                }
+                simpleAwayIndicator.Destroy();
+            }
+        });
     }
 
     private f::XiexeToonMaterial? _xsExemplar;

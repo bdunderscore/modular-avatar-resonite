@@ -8,6 +8,8 @@ public class ResoNamespaces
     
     public const string AvatarRoot = ModularAvatarNamespacePrefix + "AvatarRoot";
     public const string SettingsRoot = ModularAvatarNamespacePrefix + "AvatarSettingsRoot";
+
+    public const string IsAway = ModularAvatarNamespacePrefix + "IsAway";
     
     public const string HumanBoneRef = ModularAvatarNamespacePrefix + "HumanBone.";
     public const string HumanBonePose = ModularAvatarNamespacePrefix + "HumanBonePose.";
@@ -29,4 +31,6 @@ public class ResoNamespaces
     public const string VRIKHeadMaxFixDistance = ModularAvatarNamespacePrefix + "VRIK.HeadMaxFixDistance";
     
     public const string MaterialNamespace = ModularAvatarNamespacePrefix + "Material.Ref.";
+    public const string AFKMaterialNamespace = ModularAvatarNamespacePrefix + "Material.AFK.Ref.";
+    public const string SharedAFKMaterial = ModularAvatarNamespacePrefix + "Material.AFK";
 }

@@ -147,7 +147,7 @@ public partial class RootConverter
         
         if (_dynamicBoneTemplateRoot == null)
         {
-            _dynamicBoneTemplateRoot = CreateSettingsNode().AddSlot("Dynamic Bone Settings");
+            _dynamicBoneTemplateRoot = _settingsRoot.AddSlot("Dynamic Bone Settings");
         }
 
         string prefix = ResoNamespaces.DynBoneTemplates;

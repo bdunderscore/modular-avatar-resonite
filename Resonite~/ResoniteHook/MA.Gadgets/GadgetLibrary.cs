@@ -13,7 +13,7 @@ public class GadgetLibrary(FrooxEngine.Engine engine)
 
 public class ResonitePackageGadget(Engine engine, string name) : IGadget
 {
-    public async Task Spawn(Slot targetSlot)
+    public async Task<Slot> Spawn(Slot targetSlot)
     {
         var asm = Assembly.GetExecutingAssembly();
         using System.IO.Stream? s = asm.GetManifestResourceStream("nadena.dev.resonity.gadgets.resources." + name + ".resonitepackage");
@@ -24,10 +24,12 @@ public class ResonitePackageGadget(Engine engine, string name) : IGadget
 
         var package = RecordPackage.Decode(s);
         await PackageImporter.ImportPackage(package, targetSlot);
+
+        return targetSlot;
     }
 }
 
 public interface IGadget
 {
-    public Task Spawn(Slot targetSlot);
+    public Task<Slot> Spawn(Slot targetSlot);
 }

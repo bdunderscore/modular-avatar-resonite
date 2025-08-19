@@ -94,7 +94,7 @@ public partial class RootConverter : IDisposable
         // temporarily put the settings in the asset root, until we build the real root
         // (this ensures it's cleaned up in dispose)
         _context.Root = _context.AssetRoot;
-        _context.SettingsNode = CreateSettingsNode();
+        _context.SettingsNode = await CreateSettingsNode();
         
         _context.StatusStream.SendProgressMessage("Converting game objects...");
         _context.BuildComponentIndex(exportRoot.Root);
