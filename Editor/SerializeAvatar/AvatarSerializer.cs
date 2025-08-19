@@ -7,22 +7,15 @@ using System.Linq;
 using System.Threading.Tasks;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
-using nadena.dev.modular_avatar.core;
 using nadena.dev.modular_avatar.resonite.runtime;
 using nadena.dev.ndmf.multiplatform.components;
 using nadena.dev.ndmf.proto.mesh;
-using nadena.dev.ndmf.proto.rpc;
-using ResoPuppetSchema;
 using UnityEditor;
-using UnityEditor.Graphs;
-using UnityEditor.PackageManager.UI;
 using UnityEngine;
-using PackageManager = UnityEditor.PackageManager;
-using UnityEngine.UI;
-using VRC.SDK3.Avatars.Components;
 using BoneWeight = nadena.dev.ndmf.proto.mesh.BoneWeight;
 using Mesh = UnityEngine.Mesh;
 using p = nadena.dev.ndmf.proto;
+using PackageManager = UnityEditor.PackageManager;
 
 namespace nadena.dev.ndmf.platform.resonite
 {
@@ -482,6 +475,13 @@ namespace nadena.dev.ndmf.platform.resonite
             foreach (var mat in r.sharedMaterials)
             {
                 proto.Materials.Add(MapAsset(mat));
+            }
+
+            // Unity repeats the last material when there are more submeshes than materials; however FrooxEngine
+            // ignores the extra submeshes. Copy the material references to work around this.
+            while (sharedMesh != null && sharedMesh.subMeshCount > proto.Materials.Count && proto.Materials.Count > 0)
+            {
+                proto.Materials.Add(proto.Materials[^1]);
             }
         }
         
