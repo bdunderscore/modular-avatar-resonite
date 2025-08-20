@@ -51,7 +51,7 @@ namespace nadena.dev.ndmf.platform.resonite
             }
 
             protoMat.Metallic = metallic.floatValue;
-            if (material.GetFloat("_Reflection") == 0)
+            if (material.GetFloat("_ApplyReflection") == 0)
             {
                 protoMat.Smoothness = 0;
             }
