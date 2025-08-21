@@ -24,15 +24,19 @@ env:
   REPO: bdunderscore/modular-avatar-resonite
 
 jobs:
-  prep-cache:
-    uses: ./.github/workflows/update-resonite-cache.yml
-    secrets: inherit
-      
   build:
     runs-on: windows-latest
-    needs: prep-cache
+    #needs: prep-cache
 
     steps:
+    - name: Setup build environment
+      id: build-env
+      uses: resonite-modding-group/setup-resonite-env-action@7b7a2d95a6e5fb664f2ebaa8ffe07a9ad81e7051
+      with:
+        resonite-path: "${{ env.RESONITE_PATH }}"
+        steam-user: ${{ secrets.STEAMUSER }}
+        steam-password: ${{ secrets.STEAMPASS }}
+    
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
@@ -55,14 +59,14 @@ jobs:
       run: dotnet restore "${{ env.RPC_SERVER_SRC }}" -v normal
 
     - run: dir "${{ env.RPC_SERVER_SRC }}/packages"
-
-    - name: Restore resonite cache
-      uses: actions/cache/restore@v4
-      id: cache-resonite
-      with:
-        path: "${{ env.RESONITE_PATH }}"
-        key: ${{ needs.prep-cache.outputs.resonite_cache_key }}
-        
+#
+#    - name: Restore resonite cache
+#      uses: actions/cache/restore@v4
+#      id: cache-resonite
+#      with:
+#        path: "${{ env.RESONITE_PATH }}"
+#        key: ${{ needs.prep-cache.outputs.resonite_cache_key }}
+#        
     - run: dir "${{ env.RESONITE_PATH }}"
 
     - name: Build
