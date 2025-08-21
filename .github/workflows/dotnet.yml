@@ -19,7 +19,7 @@ on:
 env:
   RPC_SERVER_SRC: Resonite~/ResoniteHook
   RESONITE_PATH: "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Resonite"
-  RESONITE_ASSEMBLY_PATH: "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Resonite\\Resonite_Data\\Managed\\"
+  RESONITE_ASSEMBLY_PATH: "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Resonite"
   CACHE_SALT: -v2
   REPO: bdunderscore/modular-avatar-resonite
 
