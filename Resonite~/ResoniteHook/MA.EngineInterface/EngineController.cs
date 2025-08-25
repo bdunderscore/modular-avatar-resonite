@@ -94,7 +94,7 @@ public class EngineController : IAsyncDisposable
         }
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            AssimpLibrary.Instance.LoadLibrary(null, "./libassimp.so.5");
+              AssimpLibrary.Instance.LoadLibrary(null, ResoniteDirectory + "/libassimp.so");
             return;
         }
     }
