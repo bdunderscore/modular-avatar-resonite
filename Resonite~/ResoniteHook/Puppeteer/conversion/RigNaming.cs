@@ -97,42 +97,12 @@ internal static class RigNaming
             
             if (slot != null) 
             {
-                slot.Name = name;
+                var currentOrderOffset = slot.OrderOffset;
+                revertActions.Add(() => slot.OrderOffset = currentOrderOffset);
+                // HandPoser requires that the humanoid bones sort before nonhumanoid bones to avoid incorrect
+                // coordinate compensation calculations
+                slot.OrderOffset = -1;
                 humanoidBones.Add(slot);
-            }
-        }
-
-        HashSet<Slot> retainSlots = new(humanoidBones);
-        
-        // Make sure all parents of humanoid bones don't get reparented
-        foreach (var slot in humanoidBones.ToList())
-        {
-            foreach (var parent in slot.EnumerateParents())
-            {
-                if (parent is Slot s) retainSlots.Add(s);
-            }
-        }
-
-        foreach (var slot in humanoidBones)
-        {
-            foreach (var child in slot.Children.ToList())
-            {
-                if (child.Parent != root && !retainSlots.Contains(child))
-                {
-                    var priorParent = child.Parent;
-                    var priorLocalPos = child.LocalPosition;
-                    var priorLocalRot = child.LocalRotation;
-                    var priorLocalScale = child.LocalScale;
-                    
-                    revertActions.Add(() => {
-                        child.SetParent(priorParent, false);
-                        child.LocalPosition = priorLocalPos;
-                        child.LocalRotation = priorLocalRot;
-                        child.LocalScale = priorLocalScale;
-                    });
-                    
-                    child.SetParent(child.World.RootSlot, false);
-                }
             }
         }
         
