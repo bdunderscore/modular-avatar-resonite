@@ -40,9 +40,9 @@ internal static class RigNaming
             NameBone(prefix + "lower_arm", arm.LowerArm, BodyNode.LeftLowerArm + offset);
             NameBone(prefix + "hand", arm.Hand, BodyNode.LeftHand + offset);
 
-            NameFinger(prefix, "index", arm.Index, baseNode == BodyNode.LeftShoulder, "Index");
-            NameFinger(prefix, "middle", arm.Middle,  baseNode == BodyNode.LeftShoulder, "Middle");
-            NameFinger(prefix, "ring", arm.Ring,  baseNode == BodyNode.LeftShoulder, "Ring");
+            NameFinger(prefix, "index", arm.Index, baseNode == BodyNode.LeftShoulder, "IndexFinger");
+            NameFinger(prefix, "middle", arm.Middle,  baseNode == BodyNode.LeftShoulder, "MiddleFinger");
+            NameFinger(prefix, "ring", arm.Ring,  baseNode == BodyNode.LeftShoulder, "RingFinger");
             NameFinger(prefix, "pinky", arm.Pinky,  baseNode == BodyNode.LeftShoulder, "Pinky");
             NameFinger(prefix, "thumb", arm.Thumb,  baseNode == BodyNode.LeftShoulder, "Thumb");
         }
@@ -53,11 +53,11 @@ internal static class RigNaming
 
             string enumPrefix = leftChirality ? "Left" : "Right";
             
-            NameBoneStr(prefix + "metacarpal", finger.Metacarpal, enumPrefix + enumFingerName + "Finger_Metacarpal");
-            NameBoneStr(prefix + "proximal", finger.Proximal, enumPrefix + enumFingerName + "Finger_Proximal");
-            NameBoneStr(prefix + "intermediate", finger.Intermediate, enumPrefix + enumFingerName + "Finger_Intermediate");
-            NameBoneStr(prefix + "distal", finger.Distal, enumPrefix + enumFingerName + "Finger_Distal");
-            NameBoneStr(prefix + "tip", finger.Tip, enumPrefix + enumFingerName + "Finger_Tip");
+            NameBoneStr(prefix + "metacarpal", finger.Metacarpal, enumPrefix + enumFingerName + "_Metacarpal");
+            NameBoneStr(prefix + "proximal", finger.Proximal, enumPrefix + enumFingerName + "_Proximal");
+            NameBoneStr(prefix + "intermediate", finger.Intermediate, enumPrefix + enumFingerName + "_Intermediate");
+            NameBoneStr(prefix + "distal", finger.Distal, enumPrefix + enumFingerName + "_Distal");
+            NameBoneStr(prefix + "tip", finger.Tip, enumPrefix + enumFingerName + "_Tip");
         }
 
         void NameLeg(string prefix, Leg leg, BodyNode baseNode)
