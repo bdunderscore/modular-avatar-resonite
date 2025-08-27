@@ -617,8 +617,16 @@ public partial class RootConverter
         SetAnchorPositions(slot_right_hand, rightHandFwd, rightHandUp);
         
         // TODO - scale adjustment
-        
-        if (!FREEZE_AVATAR) avatarCreator.GetType().GetMethod("RunCreate", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(avatarCreator, null);
+
+        using (var _tmp = new MoveFingerChildBones(_context))
+        {
+            if (!FREEZE_AVATAR)
+            {
+                avatarCreator.GetType()
+                    .GetMethod("RunCreate", BindingFlags.NonPublic | BindingFlags.Instance)!
+                    .Invoke(avatarCreator, null);
+            }
+        }
 
         var headProxy = _root.FindChild("Head Proxy");
         var target = headProxy?.FindChild("Target");
@@ -708,5 +716,63 @@ public partial class RootConverter
     T? field<T>(object obj, string name)
     {
         return (T?)obj.GetType().GetField(name, BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(obj);
+    }
+}
+
+/// <summary>
+///  Workaround FrooxEngine bug: If there are any child bones of a finger bone, then HandPoser setup fails.
+/// </summary>
+internal class MoveFingerChildBones : IDisposable
+{
+    private List<Action> revertOps = new List<Action>();
+    
+    public MoveFingerChildBones(TranslateContext ctx)
+    {
+        var bipedRig = ctx.Root.GetComponent<f.BipedRig>();
+        var parentsOfHumanoidBones = new HashSet<f.Slot>();
+        
+        foreach (var bone in bipedRig.Bones)
+        {
+            f.Slot? boneSlot = bone.Value.Target;
+            if (boneSlot != null)
+            {
+                while (boneSlot != null)
+                {
+                    parentsOfHumanoidBones.Add(boneSlot);
+                    boneSlot = boneSlot.Parent;
+                }
+            }
+        }
+
+        if (bipedRig.Bones.TryGetTarget(BodyNode.LeftHand, out var leftHand))
+        {
+            ProtectHand(leftHand);
+        }
+
+        if (bipedRig.Bones.TryGetTarget(BodyNode.RightHand, out var rightHand))
+        {
+            ProtectHand(rightHand);
+        }
+
+        void ProtectHand(f.Slot hand)
+        {
+            var toMove = hand.GetAllChildren(false).Where(s => !parentsOfHumanoidBones.Contains(s))
+                .ToList();
+            foreach (var slot in toMove)
+            {
+                var curParent = slot.Parent;
+                var curSlot = slot;
+                revertOps.Add(() => curSlot.SetParent(curParent, false));
+                curSlot.SetParent(ctx.Root, false);
+            }
+        }
+    }
+    
+    public void Dispose()
+    {
+        foreach (var op in revertOps)
+        {
+            op();
+        }
     }
 }
