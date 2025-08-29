@@ -310,7 +310,7 @@ namespace nadena.dev.ndmf.platform.resonite
     }
     internal class LinuxPipeManager : PipeManager
     {
-        private const string PipeFolder = ".ResonitePuppetPipe";
+        private const string PipeFolder = "/tmp/ResonitePuppetPipe";
         internal override HashSet<string> ActivePipes()
         {
             if (Directory.Exists(PipeFolder) is false) Directory.CreateDirectory(PipeFolder);
@@ -322,7 +322,7 @@ namespace nadena.dev.ndmf.platform.resonite
             try { if (File.Exists(pipePath)) { File.Delete(pipePath); } }
             catch (Exception e) { Debug.LogException(e); }
         }
-        internal override string DevPipePath() { return Path.GetFullPath(Path.Combine(PipeFolder, base.DevPipePath())); }
-        internal override string GetPipePath() { return Path.GetFullPath(Path.Combine(PipeFolder, base.GetPipePath())); }
+        internal override string DevPipePath() { return Path.Combine(PipeFolder, base.DevPipePath()); }
+        internal override string GetPipePath() { return Path.Combine(PipeFolder, base.GetPipePath()); }
     }
 }
