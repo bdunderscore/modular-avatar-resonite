@@ -25,7 +25,6 @@ namespace nadena.dev.ndmf.platform.resonite
         private static ResoPuppeteer.ResoPuppeteerClient? _client;
         private static Task<ResoPuppeteer.ResoPuppeteerClient>? _clientTask = null;
         private static PipeManager _pipePathManager = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? new WindowsPipeManager() : new LinuxPipeManager();
-        private static string _executableBinaryExtension = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" : "";
         private static Process? _lastProcess;
         private static bool _isDebugBackend;
 
@@ -160,11 +159,12 @@ namespace nadena.dev.ndmf.platform.resonite
             }
 
             var cwd = Path.GetFullPath(RESOPUPPET_DIR);
-            var exe = Path.Combine(cwd, "Launcher" + _executableBinaryExtension);
+            var exe = "dotnet";
+            var launcherDllPath = Path.Combine(cwd, "Launcher.dll");
 
-            if (!File.Exists(exe))
+            if (!File.Exists(launcherDllPath))
             {
-                throw new FileNotFoundException("Resonite Launcher not found", exe);
+                throw new FileNotFoundException("Resonite Launcher not found", launcherDllPath);
             }
 
             var libraryPath = Path.Combine(Directory.GetParent(Application.dataPath)!.FullName, "Library");
@@ -175,6 +175,7 @@ namespace nadena.dev.ndmf.platform.resonite
 
             var args = new string[]
             {
+                launcherDllPath,
                 "--pipe-name", pipeName,
                 "--temp-directory", tempDir,
                 "--auto-shutdown-timeout", "30",
