@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:engine="UnityEngine.UIElements"
+        xmlns:ndmf="nadena.dev.ndmf.ui"
+        xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+>
+    <engine:VisualElement name="container">
+        <engine:HelpBox text=".NET 9.0 is required to build avatars for Resonite." message-type="Warning" name="warning-box"/>
+        <engine:Button text="Download .NET 9.0" name="btn-install"/>
+    </engine:VisualElement>
+</engine:UXML>
