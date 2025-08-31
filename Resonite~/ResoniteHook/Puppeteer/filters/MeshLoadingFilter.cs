@@ -23,9 +23,18 @@ public class MeshLoadingFilter(TranslateContext context)
     
     public async Task Apply()
     {
-        var centeredRoot = context.Root!.FindChild("CenteredRoot");
         var assets = context.AssetRoot;
         if (assets == null) return;
+
+        var loadCheck = context.Root.AddSlot("<color=cyan>Modular Avatar</color> - Mesh loaded check");
+        var loadStatus = loadCheck.AttachComponent<MeshRendererLoadStatus>();
+        var loadStatusDV = loadCheck.AttachComponent<DynamicValueVariable<bool>>();
+        loadStatusDV.Value.Value = false;
+        var loadStatusBD = loadCheck.AttachComponent<BooleanValueDriver<string>>();
+        loadStatusBD.FalseValue.Value = ResoNamespaces.LoadingGate_NotLoaded;
+        loadStatusBD.TrueValue.Value = null;
+        loadStatusBD.TargetField.Target = loadStatusDV.VariableName;
+        loadStatusBD.State.DriveFrom(loadStatus.IsLoaded);
 
         var settingsRoot = context.SettingsNode!;
         var gateRoot = settingsRoot.AddSlot("Avatar Loading Display");
@@ -39,29 +48,12 @@ public class MeshLoadingFilter(TranslateContext context)
             if (renderer.EnumerateParents().Contains(gateRoot)) continue;
             if (renderer.Mesh.Target == null) continue;
 
-            var slot = renderer.Slot.AddSlot("Loaded check");
-            var meshMetadata = slot.AttachComponent<MeshAssetMetadata>();
-            meshMetadata.Mesh.DriveFrom(renderer.Mesh);
-
-            var eqDriver = slot.AttachComponent<ValueEqualityDriver<int>>();
-            eqDriver.TargetValue.Target = meshMetadata.VertexCount;
-            eqDriver.Reference.Value = -1;
-            eqDriver.UseApproximateComparison.Value = false;
-
-            var bvDriver = slot.AttachComponent<BooleanValueDriver<string>>();
-            eqDriver.Target.Target = bvDriver.State;
-            bvDriver.TrueValue.Value = ResoNamespaces.LoadingGate_NotLoaded;
-            bvDriver.FalseValue.Value = null;
-
-            var dynVar = slot.AttachComponent<DynamicValueVariable<bool>>();
-            bvDriver.TargetField.Target = dynVar.VariableName;
-            dynVar.Value.Value = false;
-            dynVar.OverrideOnLink.Value = true;
-
             var driver = renderer.Slot.AttachComponent<DynamicValueVariableDriver<bool>>();
             driver.VariableName.Value = ResoNamespaces.LoadingGate_NotLoaded;
             driver.DefaultValue.Value = true;
             driver.Target.Target = renderer.EnabledField;
+            
+            loadStatus.Renderers.Add().Target = renderer;
         }
 
         var spinner = await spinnerTask;
