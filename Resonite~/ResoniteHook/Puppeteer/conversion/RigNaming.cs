@@ -44,7 +44,29 @@ internal static class RigNaming
             NameFinger(prefix, "middle", arm.Middle,  baseNode == BodyNode.LeftShoulder, "MiddleFinger");
             NameFinger(prefix, "ring", arm.Ring,  baseNode == BodyNode.LeftShoulder, "RingFinger");
             NameFinger(prefix, "pinky", arm.Pinky,  baseNode == BodyNode.LeftShoulder, "Pinky");
-            NameFinger(prefix, "thumb", arm.Thumb,  baseNode == BodyNode.LeftShoulder, "Thumb");
+            NameThumb(prefix, arm.Thumb, baseNode == BodyNode.LeftShoulder);
+        }
+
+        void NameThumb(string prefix, Finger finger, bool leftChirality)
+        {
+            // Unity names the thumb bones Proximal/Intermediate/Distal, but when converting to resonite
+            // the conversion is more natural if we map this to Metacarpal/Proximal/Distal. So we have a bit
+            // of a hack here to get this mapping right.
+
+            if (finger.Metacarpal != null)
+            {
+                // We actually have a metacarpal, so use the normal mapping
+                NameFinger(prefix, "thumb", finger, leftChirality, "Thumb");
+                return;
+            }
+
+            prefix += "finger_thumb_";
+            string enumPrefix = (leftChirality ? "Left" : "Right") + "Thumb";
+            
+            NameBoneStr(prefix + "metacarpal", finger.Proximal, enumPrefix + "_Metacarpal");
+            NameBoneStr(prefix + "proximal", finger.Intermediate, enumPrefix + "_Proximal");
+            NameBoneStr(prefix + "distal", finger.Distal, enumPrefix + "_Distal");
+            NameBoneStr(prefix + "tip", finger.Tip, enumPrefix + "_Tip");
         }
         
         void NameFinger(string prefix, string fingerName, Finger finger, bool leftChirality, string enumFingerName)
