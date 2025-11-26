@@ -83,6 +83,8 @@ namespace nadena.dev.ndmf.platform.resonite
                         break;
                 }
             }
+            
+            Debug.Log("[MA-Resonite] Log stream disconnected");
         } 
 
         public static ClientHandle ClientHandle()
@@ -94,7 +96,7 @@ namespace nadena.dev.ndmf.platform.resonite
 
         public static Task<ResoPuppeteer.ResoPuppeteerClient> GetClient()
         {
-            if (_clientTask != null && !_clientTask.IsCompleted)
+            if (_clientTask != null && !_clientTask.IsCompletedSuccessfully)
             {
                 return _clientTask;
             }
@@ -160,13 +162,7 @@ namespace nadena.dev.ndmf.platform.resonite
             }
 
             var cwd = Path.GetFullPath(RESOPUPPET_DIR);
-            var exe = Path.Combine(cwd, "Launcher" + _executableBinaryExtension);
-
-            if (!File.Exists(exe))
-            {
-                throw new FileNotFoundException("Resonite Launcher not found", exe);
-            }
-
+            
             var libraryPath = Path.Combine(Directory.GetParent(Application.dataPath)!.FullName, "Library");
             var tempDir = Path.Combine(libraryPath, "ResonitePuppet");
             Directory.CreateDirectory(tempDir);
@@ -175,47 +171,55 @@ namespace nadena.dev.ndmf.platform.resonite
 
             var args = new string[]
             {
+                "Launcher.dll",
                 "--pipe-name", pipeName,
                 "--temp-directory", tempDir,
-                "--auto-shutdown-timeout", "30",
-                "--log-path", "\"" + logPath + "\""
+                "--auto-shutdown-timeout", "30"
             };
 
             var startInfo = new ProcessStartInfo
             {
-                FileName = exe,
+                FileName = "dotnet",
                 Arguments = string.Join(" ", args),
                 WorkingDirectory = cwd,
                 UseShellExecute = false,
                 CreateNoWindow = true,
             };
 
-            _lastProcess = new Process
+            var myProcess = _lastProcess = new Process
             {
                 StartInfo = startInfo,
                 EnableRaisingEvents = true
             };
-            _lastProcess.Exited += (sender, e) =>
+            
+            TaskCompletionSource<object?> ProcessExit = new TaskCompletionSource<object?>();
+            //myProcess.OutputDataReceived += (_, e) => Debug.Log("[MA-Resonite] " + e.Data);
+            //myProcess.ErrorDataReceived += (_, e) => Debug.LogError("[MA-Resonite] " + e.Data);
+            myProcess.Exited += (sender, e) =>
             {
-                Console.WriteLine("Resonite Launcher exited");
+                Debug.Log("[RPCClientController] Resonite Launcher exited");
 
                 // ResonitePuppeteer から NamedPipeServer.Dispose を呼ぶ良い手段がなかったので仕方がなくこっちで強制的に削除します by Reina_Sakiria
                 _pipePathManager.ForceRemovePipe(pipeName);
+                
+                ProcessExit.TrySetResult(null);
 
                 _client = null;
             };
 
-            if (!_lastProcess.Start())
+            if (!myProcess.Start())
             {
                 throw new Exception("Failed to start Resonite Launcher");
             }
+
+            Debug.Log("[RPCClientController] Process started");
 
             // Register domain reload hook to shut down the server
             AppDomain.CurrentDomain.DomainUnload += (sender, e) =>
             {
                 try
                 {
-                    _lastProcess.Kill();
+                    myProcess.Kill();
                 }
                 catch (Exception ex)
                 {
@@ -228,7 +232,7 @@ namespace nadena.dev.ndmf.platform.resonite
             {
                 try
                 {
-                    _lastProcess.Kill();
+                    myProcess.Kill();
                 }
                 catch (Exception ex)
                 {
@@ -239,7 +243,16 @@ namespace nadena.dev.ndmf.platform.resonite
             var tmpClient = OpenChannel(pipeName);
 
             // Wait for the server to start
-            await tmpClient.PingAsync(new(), cancellationToken: CancelAfter(60_000));
+            var cancellationToken = CancelAfter(10_000);
+            var ping = tmpClient.PingAsync(new(), cancellationToken: cancellationToken);
+            await Task.WhenAny(ping.ResponseAsync, ProcessExit.Task);
+            if (ProcessExit.Task.IsCompleted)
+            {
+                throw new Exception("Resonite Launcher failed to start");
+            }
+
+            await ping.ResponseAsync;
+
             _client = tmpClient;
 
             return _client;
