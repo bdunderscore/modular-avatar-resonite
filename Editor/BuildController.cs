@@ -41,7 +41,7 @@ namespace nadena.dev.ndmf.platform.resonite
         private async Task<string?> BuildAvatar0(ClientHandle clientHandle, ExportRoot root)
         {
             var progressId = Progress.Start("Building resonite package");
-
+            
             Progress.Report(progressId, 0, "Connecting to resonite backend");
             State = "Connecting to resonite backend";
             NDMFSyncContext.RunOnMainThread(_ => OnStateUpdate?.Invoke(), null);
@@ -49,6 +49,7 @@ namespace nadena.dev.ndmf.platform.resonite
             try
             {
                 var client = await clientHandle.GetClient();
+                await client.PingAsync(new());
 
                 Progress.Report(progressId, 0, "Generating resonite package");
                 var tempPath = System.IO.Path.Combine(Application.temporaryCachePath, "tmp.resonitepackage");
@@ -76,6 +77,7 @@ namespace nadena.dev.ndmf.platform.resonite
                     } else if (msg.HasProgressMessage)
                     {
                         State = msg.ProgressMessage;
+                        UnityEngine.Debug.Log("[MA-Resonite progress] " + msg.ProgressMessage);
                         NDMFSyncContext.RunOnMainThread(_ => OnStateUpdate?.Invoke(), null);
                     } else if (msg.HasUnlocalizedError)
                     {

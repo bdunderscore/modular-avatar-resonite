@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -92,13 +93,15 @@ namespace nadena.dev.ndmf.platform.resonite
 
         private async Task BuildAvatar()
         {
-            // Start the server in the background
-            using var client = RPCClientController.ClientHandle();
-            
-            var clone = GameObject.Instantiate(_avatarRoot);
-            clone.name = clone.name.Substring(0, clone.name.Length - "(clone)".Length);
+            GameObject? clone = null;
             try
             {
+                // Start the server in the background
+                using var client = RPCClientController.ClientHandle();
+
+                clone = GameObject.Instantiate(_avatarRoot);
+                clone.name = clone.name.Substring(0, clone.name.Length - " (clone)".Length);
+
                 using var scope = new AmbientPlatform.Scope(ResonitePlatform.Instance);
                 using var scope2 = new OverrideTemporaryDirectoryScope(null);
 
@@ -106,13 +109,17 @@ namespace nadena.dev.ndmf.platform.resonite
 
                 var root = await new AvatarSerializer().Export(clone, buildContext.GetState<ResoniteBuildState>().cai);
                 await BuildController.Instance.BuildAvatar(client, root);
-                
+
                 _buildStateContainer.style.display = DisplayStyle.Flex;
                 UpdateDisplayState();
             }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(clone);
+                if (clone != null) UnityEngine.Object.DestroyImmediate(clone);
             }
         }
     }
