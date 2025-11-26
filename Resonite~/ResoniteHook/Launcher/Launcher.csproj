@@ -2,9 +2,10 @@
 
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <RollForward>LatestMajor</RollForward>
     </PropertyGroup>
     <PropertyGroup Label="License">
         <IsDeploymentTarget>true</IsDeploymentTarget>
