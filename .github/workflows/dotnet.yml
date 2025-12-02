@@ -70,10 +70,10 @@ jobs:
     - name: Test
       run: cd "${{ env.RPC_SERVER_SRC }}"; dotnet test --no-build --verbosity normal
 
-    - name: Standalone build
+    - name: Publish build
       run: |
-        dotnet publish -o ./ResoPuppet~ --no-restore --verbosity normal --self-contained true --runtime win-x64 "${{ env.RPC_SERVER_SRC }}/Launcher"
-        dotnet publish -o ./ResoPuppet~ --no-restore --verbosity normal --self-contained true --runtime win-x64 "${{ env.RPC_SERVER_SRC }}/Puppeteer"
+        dotnet publish -o ./ResoPuppet~ --no-restore --verbosity normal "${{ env.RPC_SERVER_SRC }}/Launcher"
+        dotnet publish -o ./ResoPuppet~ --no-restore --verbosity normal "${{ env.RPC_SERVER_SRC }}/Puppeteer"
 
     - name: Assert that no resonite source files were copied into the output artifact
       run: |
