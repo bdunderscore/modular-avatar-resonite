@@ -163,16 +163,14 @@ namespace nadena.dev.ndmf.platform.resonite
             }
 
             var cwd = Path.GetFullPath(RESOPUPPET_DIR);
+            var exe = Path.Combine(cwd, "Launcher" + _executableBinaryExtension);
             
             var libraryPath = Path.Combine(Directory.GetParent(Application.dataPath)!.FullName, "Library");
             var tempDir = Path.Combine(libraryPath, "ResonitePuppet");
             Directory.CreateDirectory(tempDir);
 
-            var logPath = Path.Combine(tempDir, "puppeteer.log.txt");
-
             var args = new string[]
             {
-                "Launcher.dll",
                 "--pipe-name", pipeName,
                 "--temp-directory", tempDir,
                 "--auto-shutdown-timeout", "30"
@@ -180,7 +178,7 @@ namespace nadena.dev.ndmf.platform.resonite
 
             var startInfo = new ProcessStartInfo
             {
-                FileName = "dotnet",
+                FileName = exe,
                 Arguments = string.Join(" ", args),
                 WorkingDirectory = cwd,
                 UseShellExecute = false,
