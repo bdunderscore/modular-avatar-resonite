@@ -195,8 +195,14 @@ namespace nadena.dev.ndmf.platform.resonite
             };
             
             TaskCompletionSource<object?> ProcessExit = new TaskCompletionSource<object?>();
-            myProcess.OutputDataReceived += (_, e) => Debug.Log("[MA-Resonite] " + e.Data);
-            myProcess.ErrorDataReceived += (_, e) => Debug.LogError("[MA-Resonite] " + e.Data);
+            myProcess.OutputDataReceived += (_, e) =>
+            {
+                if (!string.IsNullOrWhiteSpace(e.Data)) Debug.Log("[MA-Resonite] " + e.Data);
+            };
+            myProcess.ErrorDataReceived += (_, e) =>
+            {
+                if (!string.IsNullOrWhiteSpace(e.Data)) Debug.LogError("[MA-Resonite] " + e.Data);
+            };
             myProcess.Exited += (sender, e) =>
             {
                 Debug.Log("[RPCClientController] Resonite Launcher exited");
