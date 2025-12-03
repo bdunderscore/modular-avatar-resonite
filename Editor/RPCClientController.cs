@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
+using Grpc.Core;
 using GrpcDotNetNamedPipes;
 using JetBrains.Annotations;
 using nadena.dev.ndmf.proto.rpc;
@@ -162,16 +163,14 @@ namespace nadena.dev.ndmf.platform.resonite
             }
 
             var cwd = Path.GetFullPath(RESOPUPPET_DIR);
+            var exe = Path.Combine(cwd, "Launcher" + _executableBinaryExtension);
             
             var libraryPath = Path.Combine(Directory.GetParent(Application.dataPath)!.FullName, "Library");
             var tempDir = Path.Combine(libraryPath, "ResonitePuppet");
             Directory.CreateDirectory(tempDir);
 
-            var logPath = Path.Combine(tempDir, "puppeteer.log.txt");
-
             var args = new string[]
             {
-                "Launcher.dll",
                 "--pipe-name", pipeName,
                 "--temp-directory", tempDir,
                 "--auto-shutdown-timeout", "30"
@@ -179,11 +178,13 @@ namespace nadena.dev.ndmf.platform.resonite
 
             var startInfo = new ProcessStartInfo
             {
-                FileName = "dotnet",
+                FileName = exe,
                 Arguments = string.Join(" ", args),
                 WorkingDirectory = cwd,
                 UseShellExecute = false,
                 CreateNoWindow = true,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
             };
 
             var myProcess = _lastProcess = new Process
@@ -193,8 +194,14 @@ namespace nadena.dev.ndmf.platform.resonite
             };
             
             TaskCompletionSource<object?> ProcessExit = new TaskCompletionSource<object?>();
-            //myProcess.OutputDataReceived += (_, e) => Debug.Log("[MA-Resonite] " + e.Data);
-            //myProcess.ErrorDataReceived += (_, e) => Debug.LogError("[MA-Resonite] " + e.Data);
+            myProcess.OutputDataReceived += (_, e) =>
+            {
+                if (!string.IsNullOrWhiteSpace(e.Data)) Debug.Log("[MA-Resonite] " + e.Data);
+            };
+            myProcess.ErrorDataReceived += (_, e) =>
+            {
+                if (!string.IsNullOrWhiteSpace(e.Data)) Debug.LogError("[MA-Resonite] " + e.Data);
+            };
             myProcess.Exited += (sender, e) =>
             {
                 Debug.Log("[RPCClientController] Resonite Launcher exited");
@@ -211,6 +218,9 @@ namespace nadena.dev.ndmf.platform.resonite
             {
                 throw new Exception("Failed to start Resonite Launcher");
             }
+            
+            myProcess.BeginErrorReadLine();
+            myProcess.BeginOutputReadLine();
 
             Debug.Log("[RPCClientController] Process started");
 
@@ -251,7 +261,21 @@ namespace nadena.dev.ndmf.platform.resonite
                 throw new Exception("Resonite Launcher failed to start");
             }
 
-            await ping.ResponseAsync;
+            try
+            {
+                await ping.ResponseAsync;
+            }
+            catch (RpcException ex)
+            {
+                if (ex.StatusCode == StatusCode.Cancelled)
+                {
+                    throw new Exception("Resonite Launcher failed to start (timeout)");
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             _client = tmpClient;
 
