@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
+using Grpc.Core;
 using GrpcDotNetNamedPipes;
 using JetBrains.Annotations;
 using nadena.dev.ndmf.proto.rpc;
@@ -262,7 +263,21 @@ namespace nadena.dev.ndmf.platform.resonite
                 throw new Exception("Resonite Launcher failed to start");
             }
 
-            await ping.ResponseAsync;
+            try
+            {
+                await ping.ResponseAsync;
+            }
+            catch (RpcException ex)
+            {
+                if (ex.StatusCode == StatusCode.Cancelled)
+                {
+                    throw new Exception("Resonite Launcher failed to start (timeout)");
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             _client = tmpClient;
 
