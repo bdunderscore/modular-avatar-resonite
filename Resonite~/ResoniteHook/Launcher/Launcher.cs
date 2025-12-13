@@ -47,7 +47,11 @@ public class Launcher
 
         AppDomain.CurrentDomain.AssemblyLoad += (sender, args) =>
         {
-            NativeLibrary.SetDllImportResolver(args.LoadedAssembly, DllImportResolver);
+            // どうやらすべてのアセンブリに SetDllImportResolver を行ってしまうと衝突してロードに失敗するようになるが、
+            // SteamAudio.NET に限り、以前と同じように DllImportResolver を割り当てておかないと正常にロードできないようだ。
+            // なので雑に SteamAudio.NET にのみ SetDllImportResolver を実行する必要がある。(Resonite 側のコードで他アセンブリ同様正しく行われるとよいのだけれど ... ) by Reina_Sakiria
+            if (args.LoadedAssembly.FullName?.StartsWith("SteamAudio.NET") ?? false)
+                NativeLibrary.SetDllImportResolver(args.LoadedAssembly, DllImportResolver);
         };
 
         AppDomain.CurrentDomain.AssemblyResolve += OnResolveFailed;

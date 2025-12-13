@@ -40,11 +40,12 @@ public class EngineController : IAsyncDisposable
 
     public async Task Start()
     {
+        // あまり検証していないですが、ここで CurrentDirectory を Resonite のインストールされたディレクトリに書き換えておくことで
+        // Resonite が用意、Set する DllImportResolver が正しく動作するようです。 by Reina_Sakiria
+        Directory.SetCurrentDirectory(ResoniteDirectory);
         InitAssimp();
 
-        Assembly.Load("ProtoFlux.Nodes.FrooxEngine");
-        Assembly.Load("ProtoFluxBindings");
-        
+
         _tickController = new TickController();
         StandaloneSystemInfo info = new StandaloneSystemInfo();
         LaunchOptions options = new LaunchOptions();
