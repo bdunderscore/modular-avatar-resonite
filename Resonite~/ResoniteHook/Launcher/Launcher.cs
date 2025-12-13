@@ -42,7 +42,10 @@ public class Launcher
             dllPaths.Add(resoniteBase + "/Runtimes/win-x64/native/");
         } else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            dllPaths.Add(resoniteBase + "/runtimes/linux-x64/native/");
+            if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+                dllPaths.Add(resoniteBase + "/runtimes/linux-x64/native/");
+            else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                dllPaths.Add(resoniteBase + "/runtimes/linux-arm64/native/");
         }
 
         AppDomain.CurrentDomain.AssemblyLoad += (sender, args) =>
