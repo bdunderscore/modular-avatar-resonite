@@ -55,6 +55,7 @@ public class EngineController : IAsyncDisposable
         options.NeverSaveSettings = true;
         options.VerboseInit = true;
         options.DoNotAutoLoadHome = true;
+        options.OutputDevice =  Renderite.Shared.HeadOutputDevice.Headless;
         _engine = new Engine();
 
         bool shutdownRequested = false;

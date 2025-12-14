@@ -83,6 +83,11 @@
             <Private>false</Private>
             <HintPath>$(ResoniteDir)/SkyFrost.Base.Models.dll</HintPath>
         </Reference>
+        <Reference Include="Renderite.Shared">
+            <PrivateAssets>all</PrivateAssets>
+            <Private>false</Private>
+            <HintPath>$(ResoniteDir)/Renderite.Shared.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
     <ItemGroup>
