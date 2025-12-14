@@ -47,6 +47,11 @@ public class Launcher
 
         AppDomain.CurrentDomain.AssemblyLoad += (sender, args) =>
         {
+            if (args.LoadedAssembly.FullName?.StartsWith("SharpFont") == true)
+            {
+                // SharpFont sets its own dll import resolver
+                return;
+            }
             NativeLibrary.SetDllImportResolver(args.LoadedAssembly, DllImportResolver);
         };
 
