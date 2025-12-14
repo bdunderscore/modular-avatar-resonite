@@ -8,6 +8,8 @@ namespace nadena.dev.resonity.remote.bootstrap;
 
 public class Launcher
 {
+    private static bool DidConfigurePaths = false;
+    
     private const string defaultResoniteBase = "C:/Program Files (x86)/Steam/steamapps/common/Resonite";
     private string assemblyBase;
     private string puppeteerBase;
@@ -21,8 +23,16 @@ public class Launcher
     public int? autoShutdownTimeout;
     public string? logPath;
 
+    public static void ConfigurePathsStatic(string? resonitePath = null)
+    {
+        if (!DidConfigurePaths) new Launcher().ConfigurePaths(resonitePath);
+    } 
+    
     public void ConfigurePaths(string? resonitePath = null)
     {
+        if (DidConfigurePaths) return;
+        DidConfigurePaths = true;
+        
         resoniteBase = resonitePath ?? SteamUtils.GetGamePath(2519830) ?? defaultResoniteBase;
 
         assemblyBase = resoniteBase + "/";
@@ -47,9 +57,22 @@ public class Launcher
 
         AppDomain.CurrentDomain.AssemblyLoad += (sender, args) =>
         {
+            if (args.LoadedAssembly.FullName?.StartsWith("SharpFont") == true)
+            {
+                // SharpFont sets its own dll import resolver
+                return;
+            }
             NativeLibrary.SetDllImportResolver(args.LoadedAssembly, DllImportResolver);
         };
 
+        // Preload the freetype library to avoid issues with the DllImportResolver that is in SharpFont
+        // looking in the wrong paths.
+        var sharpFont = Assembly.Load("SharpFont");
+        DllImportResolver("freetype6", sharpFont, null);
+        DllImportResolver("libfreetype.so.6", sharpFont, null);
+        DllImportResolver("libfreetype6-arm.so", sharpFont, null);
+        DllImportResolver("libfreetype6.dylib", sharpFont, null);
+        
         AppDomain.CurrentDomain.AssemblyResolve += OnResolveFailed;
     }
 
