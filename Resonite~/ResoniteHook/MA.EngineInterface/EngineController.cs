@@ -89,12 +89,22 @@ public class EngineController : IAsyncDisposable
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            AssimpLibrary.Instance.LoadLibrary(null, ResoniteDirectory + "/assimp.dll");
+            AssimpLibrary.Instance.LoadLibrary(null, Path.Combine(ResoniteDirectory, "runtimes/win-x64/native/assimp.dll"));
             return;
         }
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-              AssimpLibrary.Instance.LoadLibrary(null, ResoniteDirectory + "/libassimp.so");
+            switch (RuntimeInformation.ProcessArchitecture)
+            {
+                default: throw new Exception(RuntimeInformation.ProcessArchitecture + " is unsupported architecture");
+
+                case Architecture.X64:
+                    AssimpLibrary.Instance.LoadLibrary(null, Path.Combine(ResoniteDirectory, "runtimes/linux-x64/native/libassimp.so"));
+                    break;
+                case Architecture.Arm64:
+                    AssimpLibrary.Instance.LoadLibrary(null, Path.Combine(ResoniteDirectory, "runtimes/linux-arm64/native/libassimp.so"));
+                    break;
+            }
             return;
         }
     }
