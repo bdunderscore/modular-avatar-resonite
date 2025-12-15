@@ -169,17 +169,14 @@ namespace nadena.dev.ndmf.platform.resonite
             var tempDir = Path.Combine(libraryPath, "ResonitePuppet");
             Directory.CreateDirectory(tempDir);
 
-            var args = new string[]
-            {
-                "--pipe-name", pipeName,
-                "--temp-directory", tempDir,
-                "--auto-shutdown-timeout", "30"
-            };
-
             var startInfo = new ProcessStartInfo
             {
                 FileName = exe,
-                Arguments = string.Join(" ", args),
+                ArgumentList = {
+                    "--pipe-name", pipeName,
+                    "--temp-directory", tempDir,
+                    "--auto-shutdown-timeout", "30"
+                },
                 WorkingDirectory = cwd,
                 UseShellExecute = false,
                 CreateNoWindow = true,

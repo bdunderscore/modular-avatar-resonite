@@ -65,6 +65,8 @@ public class Launcher
             NativeLibrary.SetDllImportResolver(args.LoadedAssembly, DllImportResolver);
         };
 
+        AppDomain.CurrentDomain.AssemblyResolve += OnResolveFailed;
+        
         // Preload the freetype library to avoid issues with the DllImportResolver that is in SharpFont
         // looking in the wrong paths.
         var sharpFont = Assembly.Load("SharpFont");
@@ -72,8 +74,6 @@ public class Launcher
         DllImportResolver("libfreetype.so.6", sharpFont, null);
         DllImportResolver("libfreetype6-arm.so", sharpFont, null);
         DllImportResolver("libfreetype6.dylib", sharpFont, null);
-        
-        AppDomain.CurrentDomain.AssemblyResolve += OnResolveFailed;
     }
 
     public Task Launch(string[] args)
