@@ -40,17 +40,13 @@ public class EngineController : IAsyncDisposable
 
     public async Task Start()
     {
-        // あまり検証していないですが、ここで CurrentDirectory を Resonite のインストールされたディレクトリに書き換えておくことで
-        // Resonite が用意、Set する DllImportResolver が正しく動作するようです。 by Reina_Sakiria
-        Directory.SetCurrentDirectory(ResoniteDirectory);
         InitAssimp();
-
 
         _tickController = new TickController();
         StandaloneSystemInfo info = new StandaloneSystemInfo();
         LaunchOptions options = new LaunchOptions();
-        options.DataDirectory = Path.Combine(TempDirectory, "Data");
-        options.CacheDirectory = Path.Combine(TempDirectory, "Cache");
+        options.DataDirectory = Path.GetFullPath(Path.Combine(TempDirectory, "Data"));
+        options.CacheDirectory = Path.GetFullPath(Path.Combine(TempDirectory, "Cache"));
         options.FastCompatibility = true;
         options.NeverSaveDash = true;
         options.NeverSaveSettings = true;
@@ -65,6 +61,10 @@ public class EngineController : IAsyncDisposable
         _engine.OnShutdown += () => _shutdownComplete.TrySetResult();
         _engine.EnvironmentShutdownCallback = () => { };
         _engine.EnvironmentCrashCallback = () => { };
+
+        // あまり検証していないですが、ここで CurrentDirectory を Resonite のインストールされたディレクトリに書き換えておくことで
+        // Resonite が用意、Set する DllImportResolver が正しく動作するようです。 by Reina_Sakiria
+        Directory.SetCurrentDirectory(ResoniteDirectory);
 
         await _engine.Initialize(ResoniteDirectory,false, options, info, new ConsoleEngineInitProgress()).ConfigureAwait(false);
 
