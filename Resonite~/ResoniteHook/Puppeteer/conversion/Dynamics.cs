@@ -205,7 +205,7 @@ public partial class RootConverter
             {
                 var templateFieldBinding = templateRoot.AttachComponent<f.DynamicField<T>>();
                 //variable.VariableName.Value = variableName;
-                StringConcatNode(templateBindings!, templateRoot.NameField, field.Name, templateFieldBinding.VariableName);
+                StringConcatNode(templateBindings!, templateRoot.Name_Field, field.Name, templateFieldBinding.VariableName);
 
                 var templateField = getField(templateChain!) ?? throw new Exception("Field not found");
                 templateFieldBinding.OverrideOnLink.Value = true;
