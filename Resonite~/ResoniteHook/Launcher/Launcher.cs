@@ -100,7 +100,7 @@ public class Launcher
         System.Console.WriteLine("Starting Resonite Launcher");
 
         /*
-        var puppeteer = Assembly.LoadFile("Puppeteer.dll");
+        var puppeteer = Assembly.LoadFrom("Puppeteer.dll");
         var program = puppeteer.GetType("Puppeteer.Program");
         var main = program.GetMethod("Main", BindingFlags.Static | BindingFlags.NonPublic);
         await (Task) main.Invoke(null, null);
@@ -115,7 +115,7 @@ public class Launcher
             var path = Assembly.GetExecutingAssembly().Location;
             path = Path.Combine(Path.GetDirectoryName(path)!, "../../Puppeteer/bin", "Puppeteer.dll");
 
-            puppeteerAssembly = Assembly.LoadFile(path);
+            puppeteerAssembly = Assembly.LoadFrom(path);
         }
 
         puppeteerBase = Path.GetDirectoryName(puppeteerAssembly.Location) + "/";
@@ -257,13 +257,13 @@ public class Launcher
 
         try
         {
-            return Assembly.LoadFile(puppeteerBase + name + ".dll");
+            return Assembly.LoadFrom(puppeteerBase + name + ".dll");
         }
         catch (Exception)
         {
             try
             {
-                return Assembly.LoadFile(dll);
+                return Assembly.LoadFrom(dll);
             }
             catch (FileNotFoundException)
             {

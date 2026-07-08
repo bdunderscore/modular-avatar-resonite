@@ -66,6 +66,7 @@ public class EngineController : IAsyncDisposable
         _engine.EnvironmentCrashCallback = () => { };
 
         await _engine.Initialize(ResoniteDirectory,false, options, info, new ConsoleEngineInitProgress()).ConfigureAwait(false);
+        _engine.InitializeUpdateLoop();
 
         //World world = Userspace.SetupUserspace(engine);
         _world = _engine.WorldManager.StartLocal(w => { });
