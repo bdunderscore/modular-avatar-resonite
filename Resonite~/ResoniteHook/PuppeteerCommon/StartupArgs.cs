@@ -4,6 +4,7 @@ public class StartupArgs
 {
     public string? resoniteInstallDirectory;
     public string? dataAndCacheRoot;
-    public string? pipeName;
-    public int? autoShutdownTimeout;
+    public string? inputPath;
+    public string? outputPath;
+    public int? timeoutSeconds;
 }

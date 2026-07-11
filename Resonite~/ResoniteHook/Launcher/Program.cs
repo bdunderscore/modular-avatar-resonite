@@ -7,7 +7,7 @@ namespace nadena.dev.resonity.remote.bootstrap;
 internal class Program
 {
     [STAThread]
-    private static async Task Main(
+    private static async Task<int> Main(
         string[] args
     )
     {
@@ -26,9 +26,7 @@ internal class Program
                 return null;
             }
         };
-        
-        
-        var launcher = new Launcher();
-        await new Launcher().Launch(args);
+
+        return await new Launcher().Launch(args);
     }
 }

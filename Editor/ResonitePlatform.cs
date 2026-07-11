@@ -3,7 +3,6 @@
 using JetBrains.Annotations;
 using nadena.dev.ndmf.model;
 using nadena.dev.ndmf.proto.rpc;
-using ResoPuppetSchema;
 using UnityEngine;
 
 namespace nadena.dev.ndmf.platform.resonite

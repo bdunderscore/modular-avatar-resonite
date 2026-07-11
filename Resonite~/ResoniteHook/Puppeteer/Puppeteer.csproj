@@ -103,18 +103,16 @@
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
         </PackageReference>
-        <PackageReference Include="Grpc.AspNetCore.Server" Version="2.70.0" />
         <PackageReference Include="Grpc.Tools" Version="2.71.0">
             <PrivateAssets>all</PrivateAssets>
             <Private>false</Private>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="GrpcDotNetNamedPipes" Version="3.1.0" />
         <PackageReference Include="JetBrains.Annotations" Version="2025.1.0-eap1" />
     </ItemGroup>
 
     <ItemGroup>
-        <Protobuf Include="../ResoPuppetSchema/proto/*.proto" LinkBase="proto" ProtoRoot="../ResoPuppetSchema" AdditionalImportDirs="$(PkgGoogle_Protobuf_Tools)/tools" GrpcServices="Server" />
+        <Protobuf Include="../ResoPuppetSchema/proto/*.proto" LinkBase="proto" ProtoRoot="../ResoPuppetSchema" AdditionalImportDirs="$(PkgGoogle_Protobuf_Tools)/tools" GrpcServices="None" />
         <Protobuf Update="../ResoPuppetSchema/proto/dynamics.proto">
             <Link>proto/dynamics.proto</Link>
         </Protobuf>

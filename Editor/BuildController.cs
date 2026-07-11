@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using nadena.dev.ndmf.preview;
 using nadena.dev.ndmf.proto;
-using nadena.dev.ndmf.proto.rpc;
 using UnityEditor;
 using UnityEngine;
 
@@ -28,67 +27,36 @@ namespace nadena.dev.ndmf.platform.resonite
 
         public bool IsBuilding => !busyState.IsCompleted;
         
-        public Task<string> BuildAvatar(ClientHandle client, ExportRoot root)
+        public Task<string> BuildAvatar(ExportRoot root)
         {
             if (!busyState.IsCompleted) throw new InvalidOperationException("Build is already in progress");
 
-            var task = BuildAvatar0(client, root);
+            var task = BuildAvatar0(root);
             busyState = task;
 
             return task;
         }
 
-        private async Task<string?> BuildAvatar0(ClientHandle clientHandle, ExportRoot root)
+        private async Task<string?> BuildAvatar0(ExportRoot root)
         {
             var progressId = Progress.Start("Building resonite package");
-            
-            Progress.Report(progressId, 0, "Connecting to resonite backend");
-            State = "Connecting to resonite backend";
+
+            Progress.Report(progressId, 0, "Generating resonite package");
+            var libraryPath = System.IO.Path.Combine(System.IO.Directory.GetParent(Application.dataPath)!.FullName, "Library");
+            var tempDir = System.IO.Path.Combine(libraryPath, "ResonitePuppet");
+            System.IO.Directory.CreateDirectory(tempDir);
+            var tempPath = System.IO.Path.Combine(tempDir, "tmp.resonitepackage");
+
+            State = "Generating resonite package";
             NDMFSyncContext.RunOnMainThread(_ => OnStateUpdate?.Invoke(), null);
 
             try
             {
-                var client = await clientHandle.GetClient();
-                await client.PingAsync(new());
-
-                Progress.Report(progressId, 0, "Generating resonite package");
-                var tempPath = System.IO.Path.Combine(Application.temporaryCachePath, "tmp.resonitepackage");
-
-                using var stream = client.ConvertObject(new() { Root = root });
-                var token = CancellationToken.None;
-                
-                State = "Generating resonite package";
-                NDMFSyncContext.RunOnMainThread(_ => OnStateUpdate?.Invoke(), null);
-
-                bool successful = false;
-                while (await stream.ResponseStream.MoveNext(token))
+                var successful = await ResoniteBackendRunner.RunBuild(root, tempPath, message =>
                 {
-                    var msg = stream.ResponseStream.Current;
-                    if (msg.HasCompletedResonitePackage)
-                    {
-                        // Write to tempPath
-                        using (var fs = System.IO.File.Create(tempPath))
-                        {
-                            await fs.WriteAsync(msg.CompletedResonitePackage.Memory);
-                            successful = true;
-                        }
-
-                        break;
-                    } else if (msg.HasProgressMessage)
-                    {
-                        State = msg.ProgressMessage;
-                        UnityEngine.Debug.Log("[MA-Resonite progress] " + msg.ProgressMessage);
-                        NDMFSyncContext.RunOnMainThread(_ => OnStateUpdate?.Invoke(), null);
-                    } else if (msg.HasUnlocalizedError)
-                    {
-                        // TODO:  NDMF error reporting
-                        Debug.LogError(msg.UnlocalizedError);
-                        NDMFSyncContext.RunOnMainThread(_ => OnStateUpdate?.Invoke(), null);
-                    } else if (msg.StructuredError != null)
-                    {
-                        // TODO
-                    }
-                }
+                    State = message;
+                    NDMFSyncContext.RunOnMainThread(_ => OnStateUpdate?.Invoke(), null);
+                }, CancellationToken.None);
 
                 if (successful)
                 {
@@ -96,15 +64,17 @@ namespace nadena.dev.ndmf.platform.resonite
                     LastAvatarName = root.Root.Name;
                     LastTempPath = tempPath;
                     NDMFSyncContext.RunOnMainThread(_ => OnStateUpdate?.Invoke(), null);
+
+                    return tempPath;
                 }
                 else
                 {
                     State = "Build failed; check console log for details";
                     LastAvatarName = null;
                     LastTempPath = null;
-                }
 
-                return tempPath;
+                    return null;
+                }
             }
             catch (Exception e)
             {

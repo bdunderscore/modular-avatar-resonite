@@ -10,14 +10,14 @@
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.30.1" />
     <PackageReference Include="Google.Protobuf.Tools" Version="3.30.1" />
-    <PackageReference Include="Grpc.Core" Version="2.46.6" />
-    <PackageReference Include="Grpc.Core.api" Version="2.71.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.71.0" />
-    <PackageReference Include="GrpcDotNetNamedPipes" Version="3.1.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.71.0">
+      <PrivateAssets>all</PrivateAssets>
+      <Private>false</Private>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="../ResoPuppetSchema/proto/*.proto" LinkBase="proto" ProtoRoot="../ResoPuppetSchema" AdditionalImportDirs="$(PkgGoogle_Protobuf_Tools)/tools" />
+    <Protobuf Include="../ResoPuppetSchema/proto/*.proto" LinkBase="proto" ProtoRoot="../ResoPuppetSchema" AdditionalImportDirs="$(PkgGoogle_Protobuf_Tools)/tools" GrpcServices="None" />
     <Protobuf Update="../ResoPuppetSchema/proto/dynamics.proto">
       <Link>proto/dynamics.proto</Link>
     </Protobuf>

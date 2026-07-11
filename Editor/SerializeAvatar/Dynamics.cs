@@ -10,7 +10,6 @@ using nadena.dev.modular_avatar.core;
 using nadena.dev.ndmf.multiplatform.components;
 using nadena.dev.ndmf.proto.mesh;
 using nadena.dev.ndmf.proto.rpc;
-using ResoPuppetSchema;
 using UnityEditor;
 using UnityEngine;
 using VRC.SDK3.Avatars.Components;

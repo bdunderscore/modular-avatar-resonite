@@ -96,9 +96,6 @@ namespace nadena.dev.ndmf.platform.resonite
             GameObject? clone = null;
             try
             {
-                // Start the server in the background
-                using var client = RPCClientController.ClientHandle();
-
                 clone = GameObject.Instantiate(_avatarRoot);
                 clone.name = clone.name.Substring(0, clone.name.Length - " (clone)".Length);
 
@@ -108,7 +105,7 @@ namespace nadena.dev.ndmf.platform.resonite
                 var buildContext = AvatarProcessor.ProcessAvatar(clone, ResonitePlatform.Instance);
 
                 var root = await new AvatarSerializer().Export(clone, buildContext.GetState<ResoniteBuildState>().cai);
-                await BuildController.Instance.BuildAvatar(client, root);
+                await BuildController.Instance.BuildAvatar(root);
 
                 _buildStateContainer.style.display = DisplayStyle.Flex;
                 UpdateDisplayState();

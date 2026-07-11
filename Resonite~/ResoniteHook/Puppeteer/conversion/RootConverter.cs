@@ -67,19 +67,19 @@ public partial class RootConverter : IDisposable
         _context.Dispose();
     }
 
-    public Task Convert(p.ExportRoot exportRoot)
+    public Task<ByteString> Convert(p.ExportRoot exportRoot)
     {
         if (_assetRoot != null) throw new InvalidOperationException("Already converted");
-        
+
         return _world.Coroutines.StartTask(async () =>
         {
             await new f::ToWorld();
 
-            await _ConvertSync(exportRoot);
+            return await _ConvertSync(exportRoot);
         });
     }
 
-    private async Task _ConvertSync(p.ExportRoot exportRoot)
+    private async Task<ByteString> _ConvertSync(p.ExportRoot exportRoot)
     {
         // FrooxEngine will attempt to create an Assets slot only if one with that name does not already exist.
         // If it does, the assets slot becomes protected and cannot be reparented. To avoid this, we apply some color codes
@@ -138,15 +138,13 @@ public partial class RootConverter : IDisposable
 
         using (var stream = new MemoryStream())
         {
-            // BuildPackage tries to close the stream, which prevents us from streaming data back to unity;
-            // filter out this close call.
+            // BuildPackage tries to close the stream, which prevents us from writing the buffer out
+            // after it returns; filter out this close call.
             var wrapper = new BlockClosureStream(stream);
             await f.PackageCreator.BuildPackage(_engine, record, savedGraph, wrapper, true);
             stream.Flush();
-            
-            // ReSharper disable once MethodHasAsyncOverload
-            var bytes = ByteString.CopyFrom(stream.GetBuffer(), 0, (int)stream.Length);
-            _context.StatusStream.SendCompletedAvatar(bytes);
+
+            return ByteString.CopyFrom(stream.GetBuffer(), 0, (int)stream.Length);
         }
     }
 
