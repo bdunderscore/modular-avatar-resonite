@@ -3,6 +3,7 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Assimp.Unmanaged;
+using Elements.Core;
 using FrooxEngine;
 using nadena.dev.resonity.gadgets;
 using SkyFrost.Base;
@@ -65,6 +66,7 @@ public class EngineController : IAsyncDisposable
         _engine.EnvironmentShutdownCallback = () => { };
         _engine.EnvironmentCrashCallback = () => { };
 
+        _engine.InitializeUpdateLoop();
         await _engine.Initialize(ResoniteDirectory,false, options, info, new ConsoleEngineInitProgress()).ConfigureAwait(false);
 
         //World world = Userspace.SetupUserspace(engine);
