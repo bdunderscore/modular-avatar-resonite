@@ -97,7 +97,7 @@ namespace nadena.dev.ndmf.platform.resonite
             try
             {
                 clone = GameObject.Instantiate(_avatarRoot);
-                clone.name = clone.name.Substring(0, clone.name.Length - " (clone)".Length);
+                clone.name = _avatarRoot.name;
 
                 using var scope = new AmbientPlatform.Scope(ResonitePlatform.Instance);
                 using var scope2 = new OverrideTemporaryDirectoryScope(null);
