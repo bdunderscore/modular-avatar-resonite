@@ -149,7 +149,7 @@ public partial class RootConverter
                 {
                     // Avatar setup adds an _extra_ SimpleAwayIndicator, which breaks things. Delete the excess.
                     // We find this by looking for one which references the root slot's FresnelMaterial.
-                    if (simpleAwayIndicator.AwayMaterial.Target?.Slot == _root)
+                    if (simpleAwayIndicator.AwayMaterial.Target?.Parent == _root)
                     {
                         simpleAwayIndicator.Destroy();
                     }

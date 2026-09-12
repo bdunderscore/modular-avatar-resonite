@@ -122,7 +122,7 @@ public partial class RootConverter
             
             foreach (var slot in bipedRig.Bones)
             {
-                rig.Bones.Add().Target = slot.Value.Target;
+                rig.Bones.Add().Target = slot.Value;
             }
             
             /*
@@ -740,7 +740,7 @@ internal class MoveFingerChildBones : IDisposable
         
         foreach (var bone in bipedRig.Bones)
         {
-            f.Slot? boneSlot = bone.Value.Target;
+            f.Slot? boneSlot = bone.Value;
             if (boneSlot != null)
             {
                 while (boneSlot != null)
