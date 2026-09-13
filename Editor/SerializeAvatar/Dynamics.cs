@@ -12,7 +12,6 @@ using nadena.dev.ndmf.proto.mesh;
 using nadena.dev.ndmf.proto.rpc;
 using UnityEditor;
 using UnityEngine;
-using VRC.SDK3.Avatars.Components;
 using BoneWeight = nadena.dev.ndmf.proto.mesh.BoneWeight;
 using Mesh = UnityEngine.Mesh;
 using p = nadena.dev.ndmf.proto;
